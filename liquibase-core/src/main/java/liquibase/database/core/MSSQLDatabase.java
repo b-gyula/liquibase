@@ -26,6 +26,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
+import static liquibase.database.Database.ObjectType.*;
 
 /**
  * Encapsulates MS-SQL database support.
@@ -651,4 +652,17 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
                 "VALUES", "VARYING", "VIEW",
                 "WAITFOR", "WHEN", "WHERE", "WHILE", "WITH", "WITHIN GROUP", "WRITETEXT");
     }
+
+    @Override
+    public Collection<ObjectType> supportsDropIfExists() {
+        try {
+            return this.getDatabaseMajorVersion() >= MSSQL_SERVER_VERSIONS.MSSQL2016 ? NONE : ALL;
+        }
+        catch(Exception ignored){
+
+        }
+        return NONE;
+    }
+
+
 }

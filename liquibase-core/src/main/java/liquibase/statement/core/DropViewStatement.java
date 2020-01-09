@@ -7,11 +7,17 @@ public class DropViewStatement extends AbstractSqlStatement {
     private String catalogName;
     private String schemaName;
     private String viewName;
+    private boolean ifExists;
 
     public DropViewStatement(String catalogName, String schemaName, String viewName) {
+        this( catalogName, schemaName, viewName, true);
+    }
+
+    public DropViewStatement(String catalogName, String schemaName, String viewName, boolean ifExists) {
         this.catalogName = catalogName;
         this.schemaName = schemaName;
         this.viewName = viewName;
+        this.ifExists = ifExists;
     }
 
     public String getCatalogName() {
@@ -24,5 +30,9 @@ public class DropViewStatement extends AbstractSqlStatement {
 
     public String getViewName() {
         return viewName;
+    }
+
+    public boolean ifExists() {
+        return ifExists;
     }
 }

@@ -7,6 +7,8 @@ import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DropViewStatement;
 import liquibase.structure.core.View;
 
+import static liquibase.database.Database.ObjectType.VIEW;
+
 /**
  * Drops an existing view.
  */
@@ -15,7 +17,7 @@ public class DropViewChange extends AbstractChange {
     private String catalogName;
     private String schemaName;
     private String viewName;
-
+    private boolean ifExists = true;
 
     @DatabaseChangeProperty(mustEqualExisting ="view.catalog", since = "3.0")
     public String getCatalogName() {
@@ -44,17 +46,28 @@ public class DropViewChange extends AbstractChange {
         this.viewName = viewName;
     }
 
+    @DatabaseChangeProperty(mustEqualExisting = "view.ifExists", since = "3.9"
+           , description = "whether the existence of the view shall be checked before its drop to avoid error. Default: true")
+    public Boolean getIfExists() { return ifExists; }
+
+    public void setIfExists(Boolean ifExists) {
+        if(null != ifExists) {
+            this.ifExists = ifExists;
+        }
+    }
+
     @Override
     public SqlStatement[] generateStatements(Database database) {
         return new SqlStatement[]{
-                new DropViewStatement(getCatalogName(), getSchemaName(), getViewName()),
+            new DropViewStatement(getCatalogName(), getSchemaName(), getViewName(), getIfExists())
         };
     }
 
     @Override
     public ChangeStatus checkStatus(Database database) {
         try {
-            return new ChangeStatus().assertComplete(!SnapshotGeneratorFactory.getInstance().has(new View(getCatalogName(), getSchemaName(), getViewName()), database), "View exists");
+            return new ChangeStatus().assertComplete(!SnapshotGeneratorFactory.getInstance().has(
+                    new View(getCatalogName(), getSchemaName(), getViewName()), database), "View exists");
         } catch (Exception e) {
             return new ChangeStatus().unknown(e);
         }

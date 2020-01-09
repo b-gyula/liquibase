@@ -27,6 +27,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 
+import static liquibase.database.Database.ObjectType.ALL;
+import static liquibase.database.Database.ObjectType.NONE;
+
 /**
  * Encapsulates PostgreSQL database support.
  */
@@ -389,5 +392,23 @@ public class PostgresDatabase extends AbstractJdbcDatabase {
         }
         return enterpriseDb ? DbTypes.EDB : DbTypes.COMMUNITY;
     }
+
+    @Override
+    public Collection<ObjectType> supportsDropIfExists() {
+        int major = 0;
+        int minor = 0;
+
+        try {
+            major = getDatabaseMajorVersion();
+            minor = getDatabaseMinorVersion();
+        } catch (DatabaseException e) {
+            LogService.getLog(getClass()).warning(
+                    LogType.LOG, "Unable to determine exact database server version"
+                            + " - DROP ... IF EXISTS disallowed: ", e);
+            return NONE;
+        }
+        return StringUtils.isMinimumVersion("8.2", major, minor, 0) ? ALL : NONE;
+    }
+
 
 }

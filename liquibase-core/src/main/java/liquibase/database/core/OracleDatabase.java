@@ -685,4 +685,8 @@ public class OracleDatabase extends AbstractJdbcDatabase {
 
     }
 
+    @Override
+    public Collection<ObjectType> supportsDropIfExists() {
+        return ObjectType.NONE;
+    }
 }

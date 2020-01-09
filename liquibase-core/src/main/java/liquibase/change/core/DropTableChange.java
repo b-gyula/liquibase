@@ -61,7 +61,7 @@ public class DropTableChange extends AbstractChange {
         }
         
         return new SqlStatement[]{
-                new DropTableStatement(getCatalogName(), getSchemaName(), getTableName(), constraints)
+            new DropTableStatement(getCatalogName(), getSchemaName(), getTableName(), constraints)
         };
     }
 

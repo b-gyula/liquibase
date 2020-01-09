@@ -15,11 +15,9 @@ import liquibase.structure.DatabaseObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
+import static liquibase.database.Database.ObjectType.*;
 /**
  * Interface that every DBMS supported by this software must implement. Most methods belong into ont of these
  * categories:
@@ -453,5 +451,32 @@ public interface Database extends PrioritizedService {
     String unescapeDataTypeString(String dataTypeString);
 
     ValidationErrors validate();
+
+    enum ObjectType {
+        TABLE(1),
+        VIEW(2);
+
+        private final int id;
+
+        private ObjectType(int id) {
+            this.id = id;
+        }
+
+        public static Collection<ObjectType> of(ObjectType... ot){
+            return Arrays.asList( ot );
+        }
+
+        public static Collection<ObjectType> NONE = of( new ObjectType[0] );
+
+        public static Collection<ObjectType> ALL = of( ObjectType.values() );
+
+    }
+
+    /**
+     * Returns the object types supporting "DROP ... IF EXISTS"
+     */
+    default Collection<ObjectType> supportsDropIfExists() {
+        return ALL;
+    }
 }
 
