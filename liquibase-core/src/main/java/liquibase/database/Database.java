@@ -11,6 +11,7 @@ import liquibase.sql.visitor.SqlVisitor;
 import liquibase.statement.DatabaseFunction;
 import liquibase.statement.SqlStatement;
 import liquibase.structure.DatabaseObject;
+import liquibase.structure.core.Table;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -455,7 +456,7 @@ public interface Database extends PrioritizedService {
     enum ObjectType {
         TABLE(1),
         VIEW(2);
-
+        /// INDEX, SCHEMA, COLUMN, CONSTRAINT, TRIGGER, USER, SEQUENCE
         private final int id;
 
         private ObjectType(int id) {
@@ -472,11 +473,22 @@ public interface Database extends PrioritizedService {
 
     }
 
-    /**
-     * Returns the object types supporting "DROP ... IF EXISTS"
-     */
+    // TODO shall be Table.class???
+    /** Returns the object types supporting "DROP ... IF EXISTS"  */
     default Collection<ObjectType> supportsDropIfExists() {
         return ALL;
+    }
+
+    default String fullName() {
+        String fullName = getDatabaseProductName();
+        try{
+            fullName += " " + getDatabaseProductVersion();
+        } catch (DatabaseException e) {
+            try{
+                fullName += " " + getDatabaseMajorVersion() + "." + getDatabaseMinorVersion();
+            }catch(DatabaseException e1){}
+        }
+        return fullName;
     }
 }
 

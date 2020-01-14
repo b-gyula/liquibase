@@ -395,7 +395,7 @@ public abstract class AbstractChange implements Change {
             ChangeFactory.getInstance().getChangeMetaData(this).getParameters().values()) {
             if (param.isRequiredFor(database) && (param.getCurrentValue(this) == null)) {
                 changeValidationErrors.addError(param.getParameterName() + " is required for " +
-                    ChangeFactory.getInstance().getChangeMetaData(this).getName() + " on " + database.getShortName());
+                    ChangeFactory.getInstance().getChangeMetaData(this).getName() + " on " + database.fullName());
             }
         }
 

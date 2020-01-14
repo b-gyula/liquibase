@@ -18,9 +18,6 @@ public class DropTableGenerator extends AbstractSqlGenerator<DropTableStatement>
     public ValidationErrors validate(DropTableStatement dropTableStatement, Database database, SqlGeneratorChain sqlGeneratorChain) {
         ValidationErrors validationErrors = new ValidationErrors();
         validationErrors.checkRequiredField("tableName", dropTableStatement.getTableName());
-        if(!database.supportsDropIfExists().contains(TABLE)) {
-            validationErrors.checkDisallowedField("ifExists", "", database);
-        }
         return validationErrors;
     }
 
@@ -28,7 +25,7 @@ public class DropTableGenerator extends AbstractSqlGenerator<DropTableStatement>
     public Sql[] generateSql(DropTableStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain) {
         StringBuffer buffer = new StringBuffer();
         buffer.append("DROP TABLE ");
-        if(statement.ifExists()) {
+        if(statement.ifExists() && database.supportsDropIfExists().contains(TABLE)) {
             buffer.append("IF EXISTS ");
         }
         buffer.append(database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName()));

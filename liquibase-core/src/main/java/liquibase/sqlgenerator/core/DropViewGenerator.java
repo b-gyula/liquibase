@@ -16,9 +16,6 @@ public class DropViewGenerator extends AbstractSqlGenerator<DropViewStatement> {
     public ValidationErrors validate(DropViewStatement dropViewStatement, Database database, SqlGeneratorChain sqlGeneratorChain) {
         ValidationErrors validationErrors = new ValidationErrors();
         validationErrors.checkRequiredField("viewName", dropViewStatement.getViewName());
-        if(!database.supportsDropIfExists().contains(VIEW)) {
-            validationErrors.checkDisallowedField("ifExists", "", database);
-        }
         return validationErrors;
     }
 
@@ -26,7 +23,7 @@ public class DropViewGenerator extends AbstractSqlGenerator<DropViewStatement> {
     public Sql[] generateSql(DropViewStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain) {
         return new Sql[] {
             new UnparsedSql("DROP VIEW "
-                    + (statement.ifExists() && database.supportsDropIfExists().contains(TABLE) ?
+                    + (statement.ifExists() && database.supportsDropIfExists().contains(VIEW) ?
                     "IF EXISTS ":"")
                  + database.escapeViewName(statement.getCatalogName(), statement.getSchemaName()
                     , statement.getViewName()), getAffectedView(statement))
