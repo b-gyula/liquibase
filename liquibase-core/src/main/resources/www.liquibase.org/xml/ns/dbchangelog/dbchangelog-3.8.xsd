@@ -1179,6 +1179,7 @@
         <xsd:complexType>
             <xsd:attributeGroup ref="changeAttributes"/>
             <xsd:attributeGroup ref="dropTableAttributes"/>
+            <xsd:attribute name="ifExists" type="booleanExp"/>
         </xsd:complexType>
     </xsd:element>
 
@@ -1188,6 +1189,7 @@
             <xsd:attribute name="viewName" type="xsd:string" use="required"/>
             <xsd:attribute name="catalogName" type="xsd:string"/>
             <xsd:attribute name="schemaName" type="xsd:string"/>
+            <xsd:attribute name="ifExists" type="booleanExp"/>
         </xsd:complexType>
     </xsd:element>
 

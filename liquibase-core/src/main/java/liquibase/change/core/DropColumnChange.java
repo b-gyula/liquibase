@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static liquibase.change.ChangeParameterMetaData.ALL;
+
 /**
  * Drops an existing column from a table.
  */
@@ -60,7 +62,7 @@ public class DropColumnChange extends AbstractChange implements ChangeWithColumn
         return super.validate(database);
     }
     
-    @DatabaseChangeProperty(description = "Name of the column to drop", requiredForDatabase = "none",
+    @DatabaseChangeProperty(description = "Name of the column to drop", requiredForDatabase = ALL,
         mustEqualExisting = "column")
     public String getColumnName() {
         return columnName;
@@ -90,7 +92,7 @@ public class DropColumnChange extends AbstractChange implements ChangeWithColumn
     }
     
     @DatabaseChangeProperty(description = "Name of the table containing the column to drop",
-        mustEqualExisting = "column.relation")
+        mustEqualExisting = "column.relation", requiredForDatabase = ALL)
     public String getTableName() {
         return tableName;
     }
