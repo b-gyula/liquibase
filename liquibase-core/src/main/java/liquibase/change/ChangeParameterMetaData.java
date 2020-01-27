@@ -29,6 +29,7 @@ public class ChangeParameterMetaData {
 
     public static final String COMPUTE = "COMPUTE";
     public static final String ALL = "all";
+    public static final String NONE = "none";
 
     private Change change;
     private String parameterName;
@@ -91,13 +92,13 @@ public class ChangeParameterMetaData {
 
     protected Set<String> analyzeSupportedDatabases(String[] supportedDatabases) {
         if (supportedDatabases == null) {
-            supportedDatabases = new String[]{ChangeParameterMetaData.COMPUTE};
+            supportedDatabases = new String[]{COMPUTE};
         }
 
         Set<String> computedDatabases = new HashSet<>();
 
-        if ((supportedDatabases.length == 1) && StringUtils.join(supportedDatabases, ",").equals
-            (ChangeParameterMetaData.COMPUTE)) {
+        if ((supportedDatabases.length == 1)
+          && StringUtils.join(supportedDatabases, ",").equals(COMPUTE)) {
             int validDatabases = 0;
             for (Database database : DatabaseFactory.getInstance().getImplementedDatabases()) {
                 if ((database.getShortName() == null) || "unsupported".equals(database.getShortName())) {
@@ -130,7 +131,7 @@ public class ChangeParameterMetaData {
                 computedDatabases = new HashSet<>(Arrays.asList(ALL));
             }
 
-            computedDatabases.remove("none");
+            computedDatabases.remove(NONE);
 
             return computedDatabases;
         } else {
@@ -141,13 +142,13 @@ public class ChangeParameterMetaData {
 
     protected Set<String> analyzeRequiredDatabases(String[] requiredDatabases) {
         if (requiredDatabases == null) {
-            requiredDatabases = new String[]{ChangeParameterMetaData.COMPUTE};
+            requiredDatabases = new String[]{COMPUTE};
         }
 
         Set<String> computedDatabases = new HashSet<>();
 
-        if ((requiredDatabases.length == 1) && StringUtils.join(requiredDatabases, ",").equals
-            (ChangeParameterMetaData.COMPUTE)) {
+        if ((requiredDatabases.length == 1)
+           && StringUtils.join(requiredDatabases, ",").equals(COMPUTE)) {
             int validDatabases = 0;
             for (Database database : DatabaseFactory.getInstance().getImplementedDatabases()) {
                 try {
@@ -174,11 +175,11 @@ public class ChangeParameterMetaData {
                 computedDatabases = new HashSet<>(Arrays.asList(ALL));
             }
 
-            computedDatabases.remove("none");
+            computedDatabases.remove(NONE);
         } else {
             computedDatabases = new HashSet<>(Arrays.asList(requiredDatabases));
         }
-        computedDatabases.remove("none");
+        computedDatabases.remove(NONE);
         return computedDatabases;
     }
 
