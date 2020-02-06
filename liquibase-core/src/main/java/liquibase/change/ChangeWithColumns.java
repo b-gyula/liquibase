@@ -13,7 +13,9 @@ public interface ChangeWithColumns<T extends ColumnConfig> {
     /**
      * Add a column configuration to the Change.
      */
-    default void addColumn(T column) { getColumns().add(column); }
+    default void addColumn(T column) {
+        getColumns().add(column);
+    }
 
     /**
      * Return all the {@link ColumnConfig} objects defined for this {@link Change }
@@ -21,6 +23,10 @@ public interface ChangeWithColumns<T extends ColumnConfig> {
     List<T> getColumns();
 
     void setColumns(List<T> columns);
+
+    default void removeColumn(T col) {
+        getColumns().remove(col);
+    }
 
     /**
      * Unique string for the column for better identification
@@ -31,7 +37,7 @@ public interface ChangeWithColumns<T extends ColumnConfig> {
     default String columnIDString(int index, T columnConfig) {
         return " / column[" + index + "]" +
                 (StringUtils.trimToNull(columnConfig.getName()) != null ?
-        " (name:'" + columnConfig.getName() + "')" : "") ;
+                        " (name:'" + columnConfig.getName() + "')" : "") ;
     }
 
     /**

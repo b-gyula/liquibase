@@ -10,7 +10,10 @@ import liquibase.database.core.MySQLDatabase;
 import liquibase.database.core.PostgresDatabase;
 import liquibase.datatype.DataTypeFactory;
 import liquibase.datatype.LiquibaseDataType;
-import liquibase.exception.*;
+import liquibase.exception.DatabaseException;
+import liquibase.exception.DateParseException;
+import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.exception.Warnings;
 import liquibase.executor.ExecutorService;
 import liquibase.executor.LoggingExecutor;
 import liquibase.io.EmptyLineAndCommentSkippingInputStream;
@@ -94,7 +97,9 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
     }
 
     @Override
-    public boolean supports(Database database) { return true; }
+    public boolean supports(Database database) {
+        return true;
+    }
 
     @Override
     public boolean generateRollbackStatementsVolatile(Database database) {
@@ -108,7 +113,7 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
     }
 
     @DatabaseChangeProperty(
-        description = "CSV file to load", exampleValue = "com/example/users.csv",
+        description = "CSV file to load", exampleValue = "example/users.csv",
         requiredForDatabase = ALL)
     public String getFile() {
         return file;
@@ -128,8 +133,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
         this.usePreparedStatements = usePreparedStatements;
     }
 
-    @DatabaseChangeProperty( supportsDatabase = ALL,
-        description = "Lines staring with this are treated as comment and ignored. Default: " + DEFAULT_COMMENT_PATTERN)
+    @DatabaseChangeProperty( supportsDatabase = ALL, exampleValue = "$",
+        description = "Lines starting with this character are treated as comment and ignored.")
     public String getCommentLineStartsWith() {
         return commentLineStartsWith;
     }
@@ -145,8 +150,7 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
         }
     }
 
-    @DatabaseChangeProperty( supportsDatabase = ALL,
-        description = "Option whether the 'file' is relative to the changelog file")
+    @DatabaseChangeProperty( supportsDatabase = ALL)
     public Boolean isRelativeToChangelogFile() {
         return relativeToChangelogFile;
     }
@@ -165,8 +169,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
         this.encoding = encoding;
     }
 
-    @DatabaseChangeProperty(exampleValue = ",", supportsDatabase = ALL,
-        description = "Character separating the fields. Default: " + CSVReader.DEFAULT_SEPARATOR)
+    @DatabaseChangeProperty(exampleValue = ";", supportsDatabase = ALL,
+        description = "Character separating the fields.")
     public String getSeparator() {
         return separator;
     }
@@ -179,8 +183,7 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
     }
 
     @DatabaseChangeProperty(exampleValue = "'", supportsDatabase = ALL,
-        description = "The quote character for string fields containing the separator character. " +
-            "Default: " + CSVReader.DEFAULT_QUOTE_CHARACTER)
+        description = "The quote character for string fields containing the separator character.")
     public String getQuotchar() {
         return quotchar;
     }
@@ -192,7 +195,7 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
     @Override
     @DatabaseChangeProperty( supportsDatabase = ALL, serializationType = SerializationType.NESTED_OBJECT,
         description = "Column mapping and defaults can be defined.\n\n" +
-                "'header' or 'index' attributes needs to be defined if the header name in the CSV " +
+                "The 'header' or 'index' attributes needs to be defined if the header name in the CSV " +
                 "is different than the column name needs to be inserted\n" +
                 "Not defined column type it is taken from the DB.\n" +
                 "The 'defaultValue[XXX]' attributes can define value for empty fields.")
@@ -638,7 +641,6 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
     /**
      * Add columns if they were not specified in the loadData change, we interpolate their names from
      * the header columns of the CSV file.
-     *
      * @param headers the headers of the CSV file
      * @return a List of LoadDataColumnConfigs
      */

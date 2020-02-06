@@ -122,11 +122,11 @@
                                 <xsd:element name="validCheckSum" minOccurs="0" maxOccurs="unbounded">
                                     <xsd:complexType mixed="true">
                                         <xsd:sequence>
-                                            <xsd:element ref="comment" minOccurs="0" maxOccurs="1"/>
+                                            <xsd:element ref="comment" minOccurs="0"/>
                                         </xsd:sequence>
                                     </xsd:complexType>
                                 </xsd:element>
-                                <xsd:element name="preConditions" minOccurs="0" maxOccurs="1">
+                                <xsd:element name="preConditions" minOccurs="0">
                                     <xsd:annotation>
                                         <xsd:appinfo>
                                             <xsd:documentation>onChangeLogPreconditionOnSqlOutput determines what should
@@ -321,6 +321,7 @@
                 </xsd:appinfo>
             </xsd:annotation>
         </xsd:attribute>
+        <xsd:anyAttribute namespace="##other" processContents="lax"/>
     </xsd:attributeGroup>
 
     <xsd:complexType name="addColumnType" mixed="true">
@@ -343,7 +344,7 @@
         <xsd:anyAttribute namespace="##other" processContents="lax"/>
     </xsd:complexType>
 
-    <xsd:attributeGroup name="param">
+    <xsd:attributeGroup name="paramAttributes">
         <xsd:attribute name="name" type="xsd:string"/>
         <xsd:attribute name="value" type="xsd:string"/>
         <xsd:attribute name="valueNumeric" type="xsd:string"/>
@@ -530,14 +531,20 @@
         </xsd:complexType>
     </xsd:element>
 
+    <xsd:attributeGroup name="autoIncrementAttributes">
+        <xsd:attribute name="startWith" type="xsd:long"/>
+        <xsd:attribute name="incrementBy" type="xsd:long"/>
+        <xsd:attribute name="generationType" type="xsd:string"/>
+        <xsd:attribute name="defaultOnNull" type="booleanExp"/>
+    </xsd:attributeGroup>
+
     <xsd:element name="addAutoIncrement">
         <xsd:complexType>
             <xsd:attributeGroup ref="changeAttributes"/>
             <xsd:attributeGroup ref="tableNameAttribute"/>
+            <xsd:attributeGroup ref="autoIncrementAttributes"/>
             <xsd:attribute name="columnName" type="objectName" use="required"/>
             <xsd:attribute name="columnDataType" type="nonEmptyString"/>
-            <xsd:attribute name="startWith" type="xsd:long"/>
-            <xsd:attribute name="incrementBy" type="xsd:long"/>
         </xsd:complexType>
     </xsd:element>
 
@@ -881,8 +888,7 @@
     <xsd:attributeGroup name="dropForeignKeyConstraintAttrib">
         <xsd:attribute name="baseTableCatalogName" type="xsd:string"/>
         <xsd:attribute name="baseTableSchemaName" type="xsd:string"/>
-        <xsd:attribute name="baseTableName" type="objectName"
-                       use="required"/>
+        <xsd:attribute name="baseTableName" type="objectName" use="required"/>
         <xsd:attribute name="constraintName" type="xsd:string"/>
     </xsd:attributeGroup>
 
@@ -955,7 +961,7 @@
 
     <xsd:element name="param">
         <xsd:complexType>
-            <xsd:attributeGroup ref="param"/>
+            <xsd:attributeGroup ref="paramAttributes"/>
         </xsd:complexType>
     </xsd:element>
 
@@ -999,7 +1005,7 @@
     <xsd:element name="insert">
         <xsd:complexType>
             <xsd:sequence>
-                <xsd:element ref="column" minOccurs="1" maxOccurs="unbounded"/>
+                <xsd:element ref="column" maxOccurs="unbounded"/>
             </xsd:sequence>
             <xsd:attributeGroup ref="changeAttributes"/>
             <xsd:attributeGroup ref="tableNameAttribute"/>
@@ -1037,6 +1043,7 @@
         </xsd:complexType>
     </xsd:element>
 
+    <!-- Children for addColum -->
     <xsd:element name="addColumn">
         <xsd:complexType>
             <xsd:sequence>
@@ -1267,7 +1274,7 @@
     <xsd:element name="createIndex">
         <xsd:complexType>
             <xsd:choice maxOccurs="unbounded">
-                <xsd:element name="column" minOccurs="1" maxOccurs="unbounded">
+                <xsd:element name="column" maxOccurs="unbounded">
                     <xsd:complexType>
                         <xsd:complexContent mixed="true">
                             <xsd:extension base="baseColumnType">
