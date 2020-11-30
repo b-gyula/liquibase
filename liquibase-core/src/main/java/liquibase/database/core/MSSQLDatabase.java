@@ -330,7 +330,7 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
     @Override
     public String getViewDefinition(CatalogAndSchema schema, String viewName) throws DatabaseException {
         schema = schema.customize(this);
-        List<String> defLines = (List<String>) ExecutorService.getInstance().getExecutor(this)
+        List<String> defLines = (List<String>) ExecutorService.getInstance().getExecutor("jdbc", this)
             .queryForList(
                 new GetViewDefinitionStatement(schema.getCatalogName(), schema.getSchemaName(), viewName),
                 String.class
@@ -405,7 +405,7 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
                     String sql =
                         "SELECT CONVERT([sysname], DATABASEPROPERTYEX(N'" + escapeStringForDatabase(catalog) +
                             "', 'Collation'))";
-                    String collation = ExecutorService.getInstance().getExecutor(this)
+                    String collation = ExecutorService.getInstance().getExecutor("jdbc", this)
                         .queryForObject(new RawSqlStatement(sql), String.class);
                     caseSensitive = (collation != null) && !collation.contains("_CI_");
                 } else if (getConnection() instanceof OfflineConnection) {
@@ -589,7 +589,7 @@ public class MSSQLDatabase extends AbstractJdbcDatabase {
                     "         WHEN 5 THEN 'Azure'\n" +
                     "         ELSE 'Unknown'\n" +
                     "       END";
-                return ExecutorService.getInstance().getExecutor(this)
+                return ExecutorService.getInstance().getExecutor("jdbc", this)
                     .queryForObject(new RawSqlStatement(sql), String.class);
             }
         } catch (DatabaseException e) {

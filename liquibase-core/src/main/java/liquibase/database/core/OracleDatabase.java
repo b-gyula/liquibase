@@ -26,10 +26,12 @@ import liquibase.util.JdbcUtils;
 import liquibase.util.StringUtils;
 
 import java.lang.reflect.Method;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,7 +83,7 @@ public class OracleDatabase extends AbstractJdbcDatabase {
         return PRIORITY_DEFAULT;
     }
 
-    private final void tryProxySessionn(final String url, final Connection con) {
+    private void tryProxySessionn(final String url, final Connection con) {
         Matcher m = PROXY_USER.matcher(url);
         if (m.matches()) {
             Properties props = new Properties();
@@ -98,8 +100,6 @@ public class OracleDatabase extends AbstractJdbcDatabase {
 
     @Override
     public void setConnection(DatabaseConnection conn) {
-        //noinspection HardCodedStringLiteral,HardCodedStringLiteral,HardCodedStringLiteral,HardCodedStringLiteral,
-        // HardCodedStringLiteral
         //noinspection HardCodedStringLiteral,HardCodedStringLiteral,HardCodedStringLiteral,HardCodedStringLiteral,
         // HardCodedStringLiteral
         reservedWords.addAll(Arrays.asList("GROUP", "USER", "SESSION", "PASSWORD", "RESOURCE", "START", "SIZE", "UID", "DESC", "ORDER")); //more reserved words not returned by driver
@@ -141,17 +141,15 @@ public class OracleDatabase extends AbstractJdbcDatabase {
                     //cannot set it. That is OK
                 }
 
-                Statement statement = null;
-                ResultSet resultSet = null;
+                CallableStatement statement = null;
                 try {
-                    statement = sqlConn.createStatement();
                     //noinspection HardCodedStringLiteral
-                    resultSet = statement.executeQuery("SELECT value FROM v$parameter WHERE name = 'compatible'");
-                    String compatibleVersion = null;
-                    if (resultSet.next()) {
-                        //noinspection HardCodedStringLiteral
-                        compatibleVersion = resultSet.getString("value");
-                    }
+                    statement = sqlConn.prepareCall("{call DBMS_UTILITY.DB_VERSION(?,?)}");
+                    statement.registerOutParameter(1, Types.VARCHAR);
+                    statement.registerOutParameter(2, Types.VARCHAR);
+                    statement.execute();
+
+                    String compatibleVersion = statement.getString(2);
                     if (compatibleVersion != null) {
                         Matcher majorVersionMatcher = Pattern.compile("(\\d+)\\.(\\d+)\\..*").matcher(compatibleVersion);
                         if (majorVersionMatcher.matches()) {
@@ -160,12 +158,12 @@ public class OracleDatabase extends AbstractJdbcDatabase {
                         }
                     }
                 } catch (SQLException e) {
-                    @SuppressWarnings("HardCodedStringLiteral") String message = "Cannot read from v$parameter: " + e.getMessage();
+                    @SuppressWarnings("HardCodedStringLiteral") String message = "Cannot read from DBMS_UTILITY.DB_VERSION: " + e.getMessage();
 
                     //noinspection HardCodedStringLiteral
                     LogService.getLog(getClass()).info(LogType.LOG, "Could not set check compatibility mode on OracleDatabase, assuming not running in any sort of compatibility mode: " + message);
                 } finally {
-                    JdbcUtils.close(resultSet, statement);
+                    JdbcUtils.closeStatement(statement);
                 }
 
 
@@ -222,7 +220,7 @@ public class OracleDatabase extends AbstractJdbcDatabase {
     @Override
     protected String getAutoIncrementClause(final String generationType, final Boolean defaultOnNull) {
         if (StringUtils.isEmpty(generationType)) {
-            return "";
+            return super.getAutoIncrementClause();
         }
 
         String autoIncrementClause = "GENERATED %s AS IDENTITY"; // %s -- [ ALWAYS | BY DEFAULT [ ON NULL ] ]
@@ -276,7 +274,7 @@ public class OracleDatabase extends AbstractJdbcDatabase {
         }
         try {
             //noinspection HardCodedStringLiteral
-            return ExecutorService.getInstance().getExecutor(this).queryForObject(new RawCallStatement("select sys_context( 'userenv', 'current_schema' ) from dual"), String.class);
+            return ExecutorService.getInstance().getExecutor("jdbc", this).queryForObject(new RawCallStatement("select sys_context( 'userenv', 'current_schema' ) from dual"), String.class);
         } catch (Exception e) {
             //noinspection HardCodedStringLiteral
             LogService.getLog(getClass()).info(LogType.LOG, "Error getting default schema", e);
@@ -542,10 +540,10 @@ public class OracleDatabase extends AbstractJdbcDatabase {
                 try {
                     try {
                         //noinspection HardCodedStringLiteral
-                        userDefinedTypes.addAll(ExecutorService.getInstance().getExecutor(this).queryForList(new RawSqlStatement("SELECT DISTINCT TYPE_NAME FROM ALL_TYPES"), String.class));
+                        userDefinedTypes.addAll(ExecutorService.getInstance().getExecutor("jdbc", this).queryForList(new RawSqlStatement("SELECT DISTINCT TYPE_NAME FROM ALL_TYPES"), String.class));
                     } catch (DatabaseException e) { //fall back to USER_TYPES if the user cannot see ALL_TYPES
                         //noinspection HardCodedStringLiteral
-                        userDefinedTypes.addAll(ExecutorService.getInstance().getExecutor(this).queryForList(new RawSqlStatement("SELECT TYPE_NAME FROM USER_TYPES"), String.class));
+                        userDefinedTypes.addAll(ExecutorService.getInstance().getExecutor("jdbc", this).queryForList(new RawSqlStatement("SELECT TYPE_NAME FROM USER_TYPES"), String.class));
                     }
                 } catch (DatabaseException e) {
                     //ignore error

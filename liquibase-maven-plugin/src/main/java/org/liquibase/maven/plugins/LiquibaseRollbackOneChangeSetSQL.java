@@ -1,5 +1,3 @@
-// Version:   $Id: $
-// Copyright: Copyright(c) 2007 Trace Financial Limited
 package org.liquibase.maven.plugins;
 
 import liquibase.Liquibase;
@@ -26,7 +24,8 @@ import static java.util.ResourceBundle.getBundle;
 
 /**
  *
- * A helper command that allows you to inspect the SQL Liquibase will run to revert the changeSet specified in the rollbackOneChangeSet command. It is only available for Liquibase Pro users.
+ * Displays the SQL which will be executed when the corresponding rollbackOneChangeSet command is
+ * executed.  This command does not perform the actual rollback.  A Liquibase Pro license key is required.
  *
  * @goal rollbackOneChangeSetSQL
  *
@@ -105,8 +104,10 @@ public class LiquibaseRollbackOneChangeSetSQL extends AbstractLiquibaseChangeLog
         //
         // Check the Pro license
         //
-        if (! hasProLicense()) {
-            throw new LiquibaseException("The command 'rollbackOneChangeSetSQL' requires a Liquibase Pro License, available at http://liquibase.org.");
+        boolean hasProLicense = MavenUtils.checkProLicense(liquibaseProLicenseKey, commandName, getLog());
+        if (! hasProLicense) {
+            throw new LiquibaseException(
+               "The command 'rollbackOneChangeSetSQL' requires a Liquibase Pro License, available at http://www.liquibase.org/download or sales@liquibase.com.");
         }
         Database database = liquibase.getDatabase();
         LiquibaseCommand liquibaseCommand = (CommandFactory.getInstance().getCommand("rollbackOneChangeSet"));
@@ -133,12 +134,10 @@ public class LiquibaseRollbackOneChangeSetSQL extends AbstractLiquibaseChangeLog
         finally {
             try {
                 outputWriter.flush();
-                outputWriter.close();
+                closeOutputWriter(outputWriter);
             }
             catch (IOException ioe) {
                 LogService.getLog(getClass()).info(LogType.LOG, String.format("Unable to close output file"));
-            }
-            finally {
             }
         }
     }
@@ -159,6 +158,13 @@ public class LiquibaseRollbackOneChangeSetSQL extends AbstractLiquibaseChangeLog
         return fileOut;
     }
 
+    private void closeOutputWriter(Writer outputWriter) throws IOException {
+        if (outputFile == null) {
+            return;
+        }
+        outputWriter.close();
+    }
+
     private Writer createOutputWriter() throws IOException {
         String charsetName = LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class)
                 .getOutputEncoding();
@@ -169,15 +175,14 @@ public class LiquibaseRollbackOneChangeSetSQL extends AbstractLiquibaseChangeLog
     private Map<String, Object> getCommandArgsObjectMap(Liquibase liquibase) throws LiquibaseException {
         Database database = liquibase.getDatabase();
         Map<String, Object> argsMap = new HashMap<String, Object>();
-        argsMap.put("changeSetId", this.changeSetId);
-        argsMap.put("changeSetAuthor", this.changeSetAuthor);
-        argsMap.put("changeSetPath", this.changeSetPath);
         argsMap.put("force", true);
-        argsMap.put("rollbackScript", this.rollbackScript);
         argsMap.put("changeLogFile", this.changeLogFile);
         argsMap.put("database", database);
         argsMap.put("changeLog", liquibase.getDatabaseChangeLog());
         argsMap.put("resourceAccessor", liquibase.getResourceAccessor());
+        argsMap.put("changeSetId", this.changeSetId);
+        argsMap.put("changeSetAuthor", this.changeSetAuthor);
+        argsMap.put("changeSetPath", this.changeSetPath);
         return argsMap;
     }
 }

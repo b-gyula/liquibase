@@ -87,14 +87,23 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
     @Override
     public String getDefaultDriver(String url) {
         if (url != null && url.toLowerCase().startsWith("jdbc:mysql")) {
+            String cjDriverClassName = "com.mysql.cj.jdbc.Driver";
             try {
-                String cjDriverClassName = "com.mysql.cj.jdbc.Driver";
 
                 //make sure we don't have an old jdbc driver that doesn't have this class
                 Class.forName(cjDriverClassName);
                 return cjDriverClassName;
             } catch (ClassNotFoundException e) {
-                return "com.mysql.jdbc.Driver";
+                //
+                // Try to load the class again with the current thread classloader
+                //
+                ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                try {
+                    Class.forName(cjDriverClassName, true, cl);
+                    return cjDriverClassName;
+                } catch (ClassNotFoundException cnfe) {
+                    return "com.mysql.jdbc.Driver";
+                }
             }
 
         }
@@ -197,14 +206,14 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
 
     @Override
     public boolean disableForeignKeyChecks() throws DatabaseException {
-        boolean enabled = ExecutorService.getInstance().getExecutor(this).queryForInt(new RawSqlStatement("SELECT @@FOREIGN_KEY_CHECKS")) == 1;
-        ExecutorService.getInstance().getExecutor(this).execute(new RawSqlStatement("SET FOREIGN_KEY_CHECKS=0"));
+        boolean enabled = ExecutorService.getInstance().getExecutor("jdbc", this).queryForInt(new RawSqlStatement("SELECT @@FOREIGN_KEY_CHECKS")) == 1;
+        ExecutorService.getInstance().getExecutor("jdbc", this).execute(new RawSqlStatement("SET FOREIGN_KEY_CHECKS=0"));
         return enabled;
     }
 
     @Override
     public void enableForeignKeyChecks() throws DatabaseException {
-        ExecutorService.getInstance().getExecutor(this).execute(new RawSqlStatement("SET FOREIGN_KEY_CHECKS=1"));
+        ExecutorService.getInstance().getExecutor("jdbc", this).execute(new RawSqlStatement("SET FOREIGN_KEY_CHECKS=1"));
     }
 
     @Override
@@ -275,7 +284,7 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
                     "  self_ref INT NOT NULL,\n" +
                     "  CONSTRAINT c_self_ref FOREIGN KEY(self_ref) REFERENCES " + randomIdentifier + "(id)\n" +
                     ")";
-            ExecutorService.getInstance().getExecutor(this).execute(new RawSqlStatement(sql));
+            ExecutorService.getInstance().getExecutor("jdbc", this).execute(new RawSqlStatement(sql));
 
             try (
                 ResultSet rs = metaData.getImportedKeys(getDefaultCatalogName(), getDefaultSchemaName(), randomIdentifier)
@@ -300,7 +309,7 @@ public class MySQLDatabase extends AbstractJdbcDatabase {
             throw new UnexpectedLiquibaseException("Error during testing for MySQL/MariaDB JDBC driver bug.", e);
         } finally {
                 ExecutorService.getInstance().reset();
-                ExecutorService.getInstance().getExecutor(this).execute(
+                ExecutorService.getInstance().getExecutor("jdbc", this).execute(
                         new RawSqlStatement("DROP TABLE " + randomIdentifier));
         }
 

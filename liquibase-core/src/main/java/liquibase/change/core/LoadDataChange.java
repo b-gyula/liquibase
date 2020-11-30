@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static java.util.ResourceBundle.getBundle;
 import static liquibase.change.ChangeParameterMetaData.ALL;
@@ -75,6 +76,7 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
      * CSV Lines starting with that sign(s) will be treated as comments by default
      */
     public static final String DEFAULT_COMMENT_PATTERN = "#";
+    public static final Pattern BASE64_PATTERN = Pattern.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$");
     private static final Logger LOG = LogService.getLog(LoadDataChange.class);
     private static ResourceBundle coreBundle = getBundle("liquibase/i18n/liquibase-core");
     private String file;
@@ -109,9 +111,9 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
         return super.getTableName();
     }
 
-    @DatabaseChangeProperty(
-        description = "CSV file to load", exampleValue = "example/users.csv",
-        requiredForDatabase = ALL)
+    @DatabaseChangeProperty(description = "CSV file to load",
+                            exampleValue = "com/example/users.csv",
+                            requiredForDatabase = ALL)
     public String getFile() {
         return file;
     }
@@ -347,7 +349,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                         } else if (columnConfig.type() == LOAD_DATA_TYPE.CLOB) {
                             valueConfig.setValueClobFile(value);
                             needsPreparedStatement = true;
-                        } else if (columnConfig.type() == LOAD_DATA_TYPE.UUID) {
+                        } else if(columnConfig.type() == LOAD_DATA_TYPE.UUID ||
+                                  columnConfig.type() == LOAD_DATA_TYPE.OTHER) {
                             valueConfig.setType(columnConfig.getType());
                             valueConfig.setValue(value);
                         } else {
@@ -377,14 +380,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                 // 2. The database supports batched statements (for improved performance) AND we are not in an
                 //    "SQL" mode (i.e. we generate an SQL file instead of actually modifying the database).
                 if
-                (
-                    (needsPreparedStatement ||
-                        (databaseSupportsBatchUpdates &&
-                                !(ExecutorService.getInstance().getExecutor(database) instanceof LoggingExecutor)
-                        )
-                    )
-                    && hasPreparedStatementsImplemented()
-                ) {
+                ((needsPreparedStatement || (databaseSupportsBatchUpdates && ! isLoggingExecutor(database) &&
+                        hasPreparedStatementsImplemented()))) {
                     anyPreparedStatements = true;
                     ExecutablePreparedStatementBase stmt =
                         this.createPreparedStatement(
@@ -476,6 +473,10 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
         }
     }
 
+    private boolean isLoggingExecutor(Database database) {
+        return ExecutorService.getInstance().executorExists("logging", database) &&
+              (ExecutorService.getInstance().getExecutor("logging", database) instanceof LoggingExecutor);
+    }
     /**
      * Iterate through the List of LoadDataColumnConfig and ask the database for any column types that we have
      * no data type of.
@@ -565,30 +566,6 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                 }
             }
         }
-
-        /* The above is the JDK7 version of:
-        columnConfigs.entrySet().stream()
-                .filter(entry -> entry.getValue().getType() == null)
-                .forEach(entry -> {
-                    LoadDataColumnConfig columnConfig = entry.getValue();
-                    DataType dataType = tableColumns.get(entry.getKey()).getType();
-                    if (dataType == null) {
-                        LOG.warning(String.format(coreBundle.getString("unable.to.find.load.data.type"),
-                                columnConfig.toString(), snapshotOfTable.toString() ));
-                        columnConfig.setType(LOAD_DATA_TYPE.STRING.toString());
-                    } else {
-                        LiquibaseDataType liquibaseDataType = DataTypeFactory.getInstance()
-                                .fromDescription(dataType.toString(), database);
-                        if (liquibaseDataType != null) {
-                            columnConfig.setType(liquibaseDataType.getLoadTypeName().toString());
-                        } else {
-                            LOG.warning(String.format(coreBundle.getString("unable.to.convert.load.data.type"),
-                                    columnConfig.toString(), snapshotOfTable.toString(), liquibaseDataType.toString()));
-                        }
-                    }
-                }
-        );
-        */
     }
 
     @Override
@@ -763,6 +740,6 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
 
     @SuppressWarnings("HardCodedStringLiteral")
     public enum LOAD_DATA_TYPE {
-        BOOLEAN, NUMERIC, DATE, STRING, COMPUTED, SEQUENCE, BLOB, CLOB, SKIP, UUID
+        BOOLEAN, NUMERIC, DATE, STRING, COMPUTED, SEQUENCE, BLOB, CLOB, SKIP, UUID, OTHER
     }
 }
