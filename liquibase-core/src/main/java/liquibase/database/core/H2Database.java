@@ -15,11 +15,9 @@ import liquibase.statement.DatabaseFunction;
 import liquibase.util.ISODateFormat;
 import liquibase.util.JdbcUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
@@ -289,6 +287,10 @@ public class H2Database extends AbstractJdbcDatabase {
         return true;
     }
 
+    public String getSystemSchema(){
+        return "INFORMATION_SCHEMA";
+    }
+
     @Override
     public void setConnection(DatabaseConnection conn) {
         Connection sqlConn = null;
@@ -299,6 +301,10 @@ public class H2Database extends AbstractJdbcDatabase {
                     Method wrappedConn = conn.getClass().getMethod("getWrappedConnection");
                     wrappedConn.setAccessible(true);
                     sqlConn = (Connection) wrappedConn.invoke(conn);
+                    DatabaseMetaData m = ((JdbcConnection) conn).getMetaData();
+                    if(m.supportsMixedCaseIdentifiers()){
+                        unquotedObjectsAreUppercased = null;
+                    }
                 }
             } catch (Exception e) {
                 throw new UnexpectedLiquibaseException(e);
@@ -323,6 +329,7 @@ public class H2Database extends AbstractJdbcDatabase {
                     JdbcUtils.close(resultSet, statement);
                 }
             }
+
         }
         super.setConnection(conn);
     }

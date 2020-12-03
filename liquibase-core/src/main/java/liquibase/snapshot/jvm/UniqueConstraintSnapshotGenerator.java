@@ -295,21 +295,21 @@ public class UniqueConstraintSnapshotGenerator extends JdbcSnapshotGenerator {
                 String constraintName = database.correctObjectName(name, UniqueConstraint.class);
                 String tableName = database.correctObjectName(table.getName(), Table.class);
                 sql = "select CONSTRAINT_NAME, COLUMN_LIST as COLUMN_NAME "
-                        + "from " + database.getSystemSchema() + ".constraints "
-                        + "where constraint_type='UNIQUE' ";
+                        + "from " + database.getSystemSchema() + ".CONSTRAINTS "
+                        + "where CONSTRAINT_TYPE='UNIQUE' ";
                 if (catalogName != null) {
-                    sql += "and constraint_catalog='" + catalogName + "' ";
+                    sql += "and CONSTRAINT_CATALOG='" + catalogName + "' ";
                 }
                 if (schemaName != null) {
-                    sql += "and constraint_schema='" + schemaName + "' ";
+                    sql += "and CONSTRAINT_SCHEMA='" + schemaName + "' ";
                 }
 
                 if (!preferBulkQuery) {
                     if (tableName != null) {
-                        sql += "and table_name='" + tableName + "' ";
+                        sql += "and TABLE_NAME='" + tableName + "' ";
                     }
                     if (constraintName != null) {
-                        sql += "and constraint_name='" + constraintName + "'";
+                        sql += "and CONSTRAINT_NAME='" + constraintName + "'";
                     }
                 }
             }
