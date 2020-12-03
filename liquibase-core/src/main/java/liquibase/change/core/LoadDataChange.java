@@ -249,8 +249,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
             while ((line = reader.readNext()) != null) {
                 lineNumber++;
                 if((line.length == 0) || ((line.length == 1) && (trimToNull(line[0]) == null)) ||
-                    (isCommentingEnabled && isLineCommented(line))
-                ) {
+                     (isCommentingEnabled && isLineCommented(line))
+                   ) {
                     //nothing interesting on this line
                     continue;
                 }
@@ -261,13 +261,13 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                     throw new UnexpectedLiquibaseException(
                         "CSV file " + getFile() + " Line " + lineNumber + " has " + line.length +
                             " values defined, Header has " + headers.length +
-                            ". Numbers MUST be equal (check for unquoted string with embedded commas)"
+                        ". Numbers MUST be equal (check for unquoted string with embedded commas)"
                     );
                 }
 
-                boolean needsPreparedStatement = false;
-                if (usePreparedStatements != null && usePreparedStatements) {
-                    needsPreparedStatement = true;
+                boolean needsPreparedStatement = true;
+                if (usePreparedStatements != null && !usePreparedStatements) {
+                    needsPreparedStatement = false;
                 }
 
                 List<ColumnConfig> columnsFromCsv = new ArrayList<>();
@@ -379,9 +379,8 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                 // 1. There is no other option than using a prepared statement (e.g. in cases of LOBs)
                 // 2. The database supports batched statements (for improved performance) AND we are not in an
                 //    "SQL" mode (i.e. we generate an SQL file instead of actually modifying the database).
-                if
-                ((needsPreparedStatement || (databaseSupportsBatchUpdates && ! isLoggingExecutor(database) &&
-                        hasPreparedStatementsImplemented()))) {
+                if (needsPreparedStatement && databaseSupportsBatchUpdates && !isLoggingExecutor(database) &&
+                        hasPreparedStatementsImplemented()) {
                     anyPreparedStatements = true;
                     ExecutablePreparedStatementBase stmt =
                         this.createPreparedStatement(
@@ -532,12 +531,6 @@ public class LoadDataChange extends AbstractTableChange implements ChangeWithCol
                 c
             );
         }
-        /* The above is the JDK7 version of:
-        columns.forEach(c -> columnConfigs.put(
-                database.correctObjectName(c.getName(), Column.class),
-                c
-        ));
-        */
 
         for (Map.Entry<String, LoadDataColumnConfig> entry : columnConfigs.entrySet()) {
             if (entry.getValue().getType() != null) {
