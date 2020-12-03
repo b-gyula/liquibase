@@ -1542,12 +1542,12 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                         }
                     } else {
                         sql = "select CONSTRAINT_NAME, CONSTRAINT_TYPE, TABLE_NAME "
-                                + "from " + database.getSystemSchema() + ".constraints "
-                                + "where constraint_schema='" + jdbcSchemaName + "' "
-                                + "and constraint_catalog='" + jdbcCatalogName + "' "
-                                + "and constraint_type='UNIQUE'";
+                                + "from " + database.getSystemSchema() + ".CONSTRAINTS "
+                                + "where CONSTRAINT_SCHEMA='" + jdbcSchemaName + "' "
+                                + "and CONSTRAINT_CATALOG='" + jdbcCatalogName + "' "
+                                + "and CONSTRAINT_TYPE='UNIQUE'";
                         if (tableName != null) {
-                            sql += " and table_name='" + tableName + "'";
+                            sql += " and TABLE_NAME='" + database.correctObjectName(tableName, Table.class) + "'";
                         }
 
                     }
