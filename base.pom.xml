@@ -50,9 +50,9 @@
     </scm>
 
     <properties>
-        <liquibase.base.version>3.10.4</liquibase.base.version>
-        <liquibase.version.qualifier>-local</liquibase.version.qualifier>
-        <liquibase.version.snapshot>-SNAPSHOT</liquibase.version.snapshot>
+        <liquibase.base.version>3.10.5</liquibase.base.version>
+        <liquibase.version.qualifier>-my</liquibase.version.qualifier>
+        <liquibase.version.snapshot></liquibase.version.snapshot>
         <liquibase.version>${liquibase.base.version}${liquibase.version.qualifier}${liquibase.version.snapshot}</liquibase.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>

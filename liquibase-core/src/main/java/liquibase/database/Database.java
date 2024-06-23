@@ -479,6 +479,9 @@ public interface Database extends PrioritizedService {
         return ALL;
     }
 
+    /** Insert / update supports returning */
+    default boolean supportsReturning() {return false;}
+
     default String fullName() {
         String fullName = getDatabaseProductName();
         try{

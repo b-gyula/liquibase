@@ -1,8 +1,11 @@
 package liquibase.database;
 
 import liquibase.CatalogAndSchema;
+import liquibase.Labels;
+import liquibase.change.AbstractSQLChange;
 import liquibase.change.Change;
 import liquibase.change.core.DropTableChange;
+import liquibase.change.core.OutputChange;
 import liquibase.changelog.ChangeLogHistoryServiceFactory;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
@@ -29,6 +32,7 @@ import liquibase.exception.DateParseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
+import liquibase.executor.Executor;
 import liquibase.executor.ExecutorService;
 import liquibase.lockservice.LockServiceFactory;
 import liquibase.logging.LogService;
@@ -38,12 +42,10 @@ import liquibase.snapshot.EmptyDatabaseSnapshot;
 import liquibase.snapshot.SnapshotControl;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.sql.Sql;
+import liquibase.sql.visitor.InjectRuntimeVariablesVisitor;
 import liquibase.sql.visitor.SqlVisitor;
 import liquibase.sqlgenerator.SqlGeneratorFactory;
-import liquibase.statement.DatabaseFunction;
-import liquibase.statement.SequenceCurrentValueFunction;
-import liquibase.statement.SequenceNextValueFunction;
-import liquibase.statement.SqlStatement;
+import liquibase.statement.*;
 import liquibase.statement.core.GetViewDefinitionStatement;
 import liquibase.statement.core.RawCallStatement;
 import liquibase.structure.DatabaseObject;
@@ -68,17 +70,10 @@ import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
+import static liquibase.executor.ExecutorService.JDBC;
 
 /**
  * AbstractJdbcDatabase is extended by all supported databases as a facade to the underlying database.
@@ -356,7 +351,7 @@ public abstract class AbstractJdbcDatabase implements Database {
 
         try {
             SqlStatement currentSchemaStatement = getConnectionSchemaNameCallStatement();
-            return ExecutorService.getInstance().getExecutor("jdbc", this).
+            return ExecutorService.getInstance().getExecutor(JDBC, this).
                     queryForObject(currentSchemaStatement, String.class);
         } catch (Exception e) {
             LogService.getLog(getClass()).info(LogType.LOG, "Error getting default schema", e);
@@ -798,7 +793,7 @@ public abstract class AbstractJdbcDatabase implements Database {
                         }
                         SqlStatement[] sqlStatements = change.generateStatements(this);
                         for (SqlStatement statement : sqlStatements) {
-                            ExecutorService.getInstance().getExecutor("jdbc", this).execute(statement);
+                            ExecutorService.getInstance().getExecutor(JDBC, this).execute(statement);
                         }
 
                     }
@@ -891,7 +886,7 @@ public abstract class AbstractJdbcDatabase implements Database {
     @Override
     public String getViewDefinition(CatalogAndSchema schema, final String viewName) throws DatabaseException {
         schema = schema.customize(this);
-        String definition = ExecutorService.getInstance().getExecutor("jdbc", this).queryForObject(new GetViewDefinitionStatement(schema.getCatalogName(), schema.getSchemaName(), viewName), String.class);
+        String definition = ExecutorService.getInstance().getExecutor(JDBC, this).queryForObject(new GetViewDefinitionStatement(schema.getCatalogName(), schema.getSchemaName(), viewName), String.class);
         if (definition == null) {
             return null;
         }
@@ -1193,7 +1188,7 @@ public abstract class AbstractJdbcDatabase implements Database {
 
     @Override
     public void close() throws DatabaseException {
-        ExecutorService.getInstance().clearExecutor("jdbc", this);
+        ExecutorService.getInstance().clearExecutor(JDBC, this);
         DatabaseConnection connection = getConnection();
         if (connection != null) {
             if (previousAutoCommit != null) {
@@ -1253,9 +1248,19 @@ public abstract class AbstractJdbcDatabase implements Database {
 
     @Override
     public void executeStatements(final Change change, final DatabaseChangeLog changeLog, final List<SqlVisitor> sqlVisitors) throws LiquibaseException {
+        SqlVisitor injectRuntimeVariablesVisitor = new InjectRuntimeVariablesVisitor(change.getChangeSet().getChangeLog());
+        List<SqlVisitor> allSqlVisitors = new ArrayList<>();
+        if(change instanceof OutputChange) {
+            ((OutputChange) change).setMessage(
+                    injectRuntimeVariablesVisitor.modifySql(((OutputChange) change).getMessage(), this));
+        } else if (!(change instanceof AbstractSQLChange)) { // AbstractSQLChange.generateStatements does the expandExpressions
+            allSqlVisitors.add(injectRuntimeVariablesVisitor);
+        }
+
         SqlStatement[] statements = change.generateStatements(this);
 
-        execute(statements, sqlVisitors);
+        allSqlVisitors.addAll(sqlVisitors);
+        execute(statements, allSqlVisitors, change.getChangeSet().getChangeLog());
     }
 
     /*
@@ -1267,13 +1272,27 @@ public abstract class AbstractJdbcDatabase implements Database {
      */
     @Override
     public void execute(final SqlStatement[] statements, final List<SqlVisitor> sqlVisitors) throws LiquibaseException {
-        for (SqlStatement statement : statements) {
+        execute( statements, sqlVisitors, null);
+    }
+        
+    public void execute(final SqlStatement[] statements, final List<SqlVisitor> sqlVisitors, final DatabaseChangeLog changeLog ) throws LiquibaseException {
+        Executor executor = ExecutorService.getInstance().getExecutor(JDBC, this);
+        for (int i = 0; i < statements.length; i++) {
+            SqlStatement statement = statements[i];
             if (statement.skipOnUnsupported() && !SqlGeneratorFactory.getInstance().supports(statement, this)) {
                 continue;
             }
             LogService.getLog(getClass()).debug(LogType.LOG, "Executing Statement: " + statement);
             try {
-                ExecutorService.getInstance().getExecutor("jdbc", this).execute(statement, sqlVisitors);
+                String returnIn =  (statement instanceof ReturningSqlStatement) ?
+                        ((ReturningSqlStatement) statement).getResultIn() : null;
+                if(changeLog != null && returnIn != null && statements.length - 1 == i) {
+                    String sResult = executor.queryForObject(statement, String.class, sqlVisitors);
+                    changeLog.getChangeLogParameters().set(returnIn, sResult, null, new Labels(), null, false,
+                            changeLog);
+                } else {
+                    executor.execute(statement, sqlVisitors);
+                }
             } catch (DatabaseException e) {
                 if (statement.continueOnError()) {
                     LogService.getLog(getClass()).severe(LogType.LOG, "Error executing statement '"+statement.toString()+"', but continuing", e);

@@ -153,13 +153,7 @@ public class SQLFileChange extends AbstractSQLChange {
                     return null;
                 }
                 String content = StreamUtil.getStreamContents(sqlStream, encoding);
-                if (getChangeSet() != null) {
-                    ChangeLogParameters parameters = getChangeSet().getChangeLogParameters();
-                    if (parameters != null) {
-                        content = parameters.expandExpressions(content, getChangeSet().getChangeLog());
-                    }
-                }
-                return content;
+                return expandExpressions(content);
             } catch (IOException e) {
                 throw new UnexpectedLiquibaseException(e);
             }
@@ -170,10 +164,7 @@ public class SQLFileChange extends AbstractSQLChange {
 
     @Override
     public void setSql(String sql) {
-        if ((getChangeSet() != null) && (getChangeSet().getChangeLogParameters() != null)) {
-            sql = getChangeSet().getChangeLogParameters().expandExpressions(sql, getChangeSet().getChangeLog());
-        }
-        super.setSql(sql);
+        super.setSql(expandExpressions(sql));
     }
 
     @Override

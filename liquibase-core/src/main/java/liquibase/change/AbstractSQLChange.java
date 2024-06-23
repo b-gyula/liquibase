@@ -12,6 +12,7 @@ import liquibase.exception.ValidationErrors;
 import liquibase.exception.Warnings;
 import liquibase.logging.LogService;
 import liquibase.logging.LogType;
+import liquibase.sql.visitor.InjectRuntimeVariablesVisitor;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.RawSqlStatement;
 import liquibase.util.StringUtils;
@@ -19,6 +20,9 @@ import liquibase.util.StringUtils;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static liquibase.change.ChangeParameterMetaData.ALL;
+import static liquibase.change.ChangeParameterMetaData.NONE;
 
 /**
  * A common parent for all raw SQL related changes regardless of where the sql was sourced from.
@@ -43,6 +47,17 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
 
     protected String encoding;
 
+    protected String resultIn;
+
+    @DatabaseChangeProperty(description = "The name of the property to return the value into DURING RUNTIME",
+            exampleValue = "newId", requiredForDatabase = NONE, supportsDatabase = ALL)
+    public String getResultIn() {
+        return resultIn;
+    }
+
+    public void setResultIn(String value) {
+        resultIn = StringUtils.trimToNull(value);
+    }
 
     protected AbstractSQLChange() {
         setStripComments(null);
@@ -216,6 +231,12 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
         }
     }
 
+    public String expandExpressions(String sql) {
+        if ((getChangeSet() != null) && (getChangeSet().getChangeLogParameters() != null)) {
+            sql = getChangeSet().getChangeLogParameters().expandExpressions(sql, getChangeSet().getChangeLog());
+        }
+        return sql;
+    }
     /**
      * Generates one or more SqlStatements depending on how the SQL should be parsed.
      * If split statements is set to true then the SQL is split and each command is made into a separate SqlStatement.
@@ -232,32 +253,34 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
         if (sql == null) {
             return new SqlStatement[0];
         }
-
+        // Cannot use InjectRuntimeVariablesVisitor because `nativeSQL` removes placeholders for H2
+        if(getChangeSet() != null) {
+            sql = InjectRuntimeVariablesVisitor.expandExpressions(getChangeSet().getChangeLog(),sql);
+        }
         String processedSQL = normalizeLineEndings(sql);
         if (this instanceof RawSQLChange && ((RawSQLChange) this).isRerunnable()) {
-            returnStatements.add(new RawSqlStatement(processedSQL, getEndDelimiter()));
-            return returnStatements.toArray(new SqlStatement[returnStatements.size()]);
-        }
-        for (String statement : StringUtils.processMutliLineSQL(processedSQL, isStripComments(), isSplitStatements(), getEndDelimiter())) {
-            if (database instanceof MSSQLDatabase) {
-                statement = statement.replaceAll("\\n", "\r\n");
-            }
-            if (database instanceof PostgresDatabase) {
-                statement = statement.replaceAll("(^|[^\\?])\\?(?!\\?)(?=([^']*'[^']*')*[^']*$)", "$1??");
-            }
-
-            String escapedStatement = statement;
-            try {
-                if (database.getConnection() != null) {
-                    escapedStatement = database.getConnection().nativeSQL(statement);
+            returnStatements.add(new RawSqlStatement(processedSQL, getEndDelimiter(), getResultIn()));
+        } else {
+            for (String statement : StringUtils.processMutliLineSQL(processedSQL, isStripComments(), isSplitStatements(), getEndDelimiter())) {
+                if (database instanceof MSSQLDatabase) {
+                    statement = statement.replaceAll("\\n", "\r\n");
                 }
-            } catch (DatabaseException e) {
-                escapedStatement = statement;
+                if (database instanceof PostgresDatabase) {
+                    statement = statement.replaceAll("(^|[^\\?])\\?(?!\\?)(?=([^']*'[^']*')*[^']*$)", "$1??");
+                }
+
+                String escapedStatement = statement;
+                try {
+                    if (database.getConnection() != null) {
+                        escapedStatement = database.getConnection().nativeSQL(statement);
+                    }
+                } catch (DatabaseException e) {
+                    escapedStatement = statement;
+                }
+
+                returnStatements.add(new RawSqlStatement(escapedStatement, getEndDelimiter(), getResultIn()));
             }
-
-            returnStatements.add(new RawSqlStatement(escapedStatement, getEndDelimiter()));
         }
-
         return returnStatements.toArray(new SqlStatement[returnStatements.size()]);
     }
 

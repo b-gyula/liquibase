@@ -68,7 +68,7 @@ public class RawSQLChange extends AbstractSQLChange {
 
     @Override
     public String getConfirmationMessage() {
-        return "Custom SQL executed";
+        return "Raw SQL executed:" + getSql();
     }
 
     @Override

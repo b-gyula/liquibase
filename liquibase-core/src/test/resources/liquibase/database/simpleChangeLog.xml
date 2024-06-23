@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <databaseChangeLog
 				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 				xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-				xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
-
-	<changeSet id="simpleTable" author="abuschka">
+				xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog file:////dev/liquibase/build/liquibase-core/src/main/resources/www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.10.xsd">
+	<include file="" />
+	<changeSet id="simpleTable" author="abuschka" >
+		<sqlFile ></sqlFile>
 		<createTable tableName="simple_table">
 
 			<column name="pk_column" type="int">

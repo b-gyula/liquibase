@@ -7,7 +7,7 @@ import liquibase.servicelocator.ServiceLocator;
 import java.util.*;
 
 public class ExecutorService {
-
+    public static String JDBC = "jdbc";
     private static ExecutorService instance = new ExecutorService();
 
     private List<Executor> registry = new ArrayList<>();
@@ -119,7 +119,7 @@ public class ExecutorService {
      *
      */
     public Executor getExecutor(Database database) {
-        return getExecutor("jdbc", database);
+        return getExecutor(JDBC, database);
     }
 
     /**
@@ -143,7 +143,7 @@ public class ExecutorService {
      *
      */
     public void clearExecutor(Database database) {
-        clearExecutor("jdbc", database);
+        clearExecutor(JDBC, database);
     }
 
     public void clearExecutor(String name, Database database) {
