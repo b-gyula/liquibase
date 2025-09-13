@@ -549,30 +549,30 @@ public class LpmCommandStep extends AbstractCommandStep {
      * Prints the help message for the LPM command. It's hardcoded here as we are not able to call picocli help and lpm help at the same time.
      */
     private void printHelpMessage() {
-        Scope.getCurrentScope().getUI().sendMessage("""
-                Initialize and update Liquibase Package Manager (LPM)
-                Usage: liquibase lpm [OPTIONS]
-                Download, install, and manage Liquibase packages using the Liquibase Package
-                Manager (LPM)
-                      --download[=PARAM]   Download and install LPM binary
-                                           DEFAULT: false
-                                           (defaults file: 'liquibase.command.download' OR
-                                             'liquibase.command.lpm.download' , environment
-                                             variable: 'LIQUIBASE_COMMAND_DOWNLOAD' OR
-                                             'LIQUIBASE_COMMAND_LPM_DOWNLOAD')
-                  -h, --help               Show this help message and exit
-                      --lpm-home=PARAM     Directory where LPM is installed
-                                           (defaults file: 'liquibase.command.lpmHome' OR
-                                             'liquibase.command.lpm.lpmHome' , environment
-                                             variable: 'LIQUIBASE_COMMAND_LPM_HOME' OR
-                                             'LIQUIBASE_COMMAND_LPM_LPM_HOME')
-                Each argument contains the corresponding 'configuration key' in parentheses. As
-                an alternative to passing values on the command line, these keys can be used as
-                a basis for configuration settings in other locations.
-                Available configuration locations, in order of priority:
-                - Command line arguments (argument name in --help)
-                - Java system properties (configuration key listed above)
-                - Environment values (env variable listed above)
-                - Defaults file (configuration key OR argument name)""");
+        Scope.getCurrentScope().getUI().sendMessage(
+                "Initialize and update Liquibase Package Manager (LPM)\n"+
+                "Usage: liquibase lpm [OPTIONS]\n"+
+                "Download, install, and manage Liquibase packages using the Liquibase Package\n"+
+                "Manager (LPM)\n"+
+                "      --download[=PARAM]   Download and install LPM binary\n"+
+                "                           DEFAULT: false\n"+
+                "                           (defaults file: 'liquibase.command.download' OR\n"+
+                "                             'liquibase.command.lpm.download' , environment\n"+
+                "                             variable: 'LIQUIBASE_COMMAND_DOWNLOAD' OR\n"+
+                "                             'LIQUIBASE_COMMAND_LPM_DOWNLOAD')\n"+
+                "  -h, --help               Show this help message and exit\n"+
+                "      --lpm-home=PARAM     Directory where LPM is installed\n"+
+                "                           (defaults file: 'liquibase.command.lpmHome' OR\n"+
+                "                             'liquibase.command.lpm.lpmHome' , environment\n"+
+                "                             variable: 'LIQUIBASE_COMMAND_LPM_HOME' OR\n"+
+                "                             'LIQUIBASE_COMMAND_LPM_LPM_HOME')\n"+
+                "Each argument contains the corresponding 'configuration key' in parentheses. As\n"+
+                "an alternative to passing values on the command line, these keys can be used as\n"+
+                "a basis for configuration settings in other locations.\n"+
+                "Available configuration locations, in order of priority:\n"+
+                "- Command line arguments (argument name in --help)\n"+
+                "- Java system properties (configuration key listed above)\n"+
+                "- Environment values (env variable listed above)\n"+
+                "- Defaults file (configuration key OR argument name)");
     }
 }
