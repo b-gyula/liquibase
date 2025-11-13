@@ -30,7 +30,7 @@ public abstract class PreconditionLogic extends AbstractPrecondition {
     public ValidationErrors validate(Database database) {
         final ValidationErrors validationErrors = new ValidationErrors();
         for (Precondition precondition : getNestedPreconditions()) {
-            validationErrors.addAll(precondition.validate(database));
+            validationErrors.addAll(precondition.validate(database), asParent());
         }
 
         return validationErrors;
@@ -63,5 +63,9 @@ public abstract class PreconditionLogic extends AbstractPrecondition {
 
         precondition.load(node, resourceAccessor);
         return precondition;
+    }
+
+    public String asParent() {
+        return getName();
     }
 }

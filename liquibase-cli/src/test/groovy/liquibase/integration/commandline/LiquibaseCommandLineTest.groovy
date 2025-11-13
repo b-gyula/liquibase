@@ -299,7 +299,7 @@ Global Options
                                variable: 'LIQUIBASE_LOG_FILE')
 
       --log-format=PARAM     Sets the format of log output to console or log
-                               files. Open Source users default to unstructured
+                               files. Community users default to unstructured
                                "TEXT" logs to the console or output log files.
                                Pro users have the option to set value as "JSON"
                                or "JSON_PRETTY" to enable json-structured log
@@ -558,9 +558,9 @@ Commands
                                   existing database and changelogs
 
   diff                          Outputs a description of differences.  If you
-                                  have a Liquibase Pro key, you can output the
-                                  differences as JSON using the --format=JSON
-                                  option
+                                  have a Liquibase License Key, you can output
+                                  the differences as JSON using the
+                                  --format=JSON option
 
   diff-changelog                Compare two databases to produce changesets and
                                   write them to a changelog file

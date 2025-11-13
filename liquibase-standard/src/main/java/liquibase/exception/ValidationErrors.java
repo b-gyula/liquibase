@@ -129,8 +129,8 @@ public class ValidationErrors {
     }
 
 
-    public ValidationErrors addError(String message, ChangeSet changeSet) {
-        this.errorMessages.add(message + ", " + changeSet);
+    public ValidationErrors addError(String message, Object parent) {
+        this.errorMessages.add(message + parentAsString(parent) );
         return this;
     }
 
@@ -155,12 +155,12 @@ public class ValidationErrors {
         return this;
     }
 
-    public void addAll(ValidationErrors validationErrors, ChangeSet changeSet) {
+    public void addAll(ValidationErrors validationErrors, Object parent) {
         for (String message : validationErrors.getErrorMessages()) {
-            this.addError(message, changeSet);
+            this.addError(message, parent);
         }
         for (String message : validationErrors.getWarningMessages()) {
-            this.warningMessages.add(message + ", " + changeSet);
+            this.warningMessages.add(message + parentAsString(parent));
         }
     }
 
@@ -203,5 +203,9 @@ public class ValidationErrors {
             }
         }
         return Collections.unmodifiableList(unsupportedErrorMessages);
+    }
+
+    static String parentAsString (Object p) {
+        return null == p ? "" : " in '" + p + "'";
     }
 }
