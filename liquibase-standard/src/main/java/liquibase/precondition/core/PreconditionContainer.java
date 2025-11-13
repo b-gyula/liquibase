@@ -302,4 +302,8 @@ public class PreconditionContainer extends AndPrecondition implements ChangeLogC
         }
         throw new UnexpectedLiquibaseException("Unexpected field request on Precondition: " + field);
     }
+
+    public String asParent() {
+        return null == changeLog ? getName() : changeLog.toString();
+    }
 }
