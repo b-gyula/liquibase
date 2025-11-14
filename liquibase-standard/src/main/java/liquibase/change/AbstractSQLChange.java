@@ -64,7 +64,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
     private String dbms;
 
     @Getter
-	 private boolean stripCommentsUsedDefaultValue;
+    private boolean stripCommentsUsedDefaultValue;
 
     protected AbstractSQLChange() {
         setStripComments(null);
@@ -120,13 +120,12 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
 
     @Override
     public ValidationErrors validate(Database database) {
-        ValidationErrors validationErrors = new ValidationErrors(this);
-		  if(setProperty != null &&
-				 getChangeSet().getChangeLog().getChangeLogParameters().hasValue(setProperty.name, setProperty.local ? getChangeSet().getChangeLog() : null)) {
-			   validationErrors.addError(String.format("'%s' property is already defined! Cannot set new runtime value", setProperty));
-		  }
+        ValidationErrors validationErrors = super.validate(database);
+        if(setProperty != null &&
+            getChangeSet().getChangeLog().getChangeLogParameters().hasValue(setProperty.name, setProperty.local ? getChangeSet().getChangeLog() : null)) {
+            validationErrors.addError(String.format("'%s' property is already defined! Cannot set new runtime value", setProperty));
+        }
         return validationErrors;
-
     }
 
     /**
@@ -203,7 +202,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
         return splitStatementsSet;
     }
 
-	/**
+   /**
      * Return the raw SQL managed by this Change
      */
     @DatabaseChangeProperty(serializationType = SerializationType.DIRECT_VALUE)

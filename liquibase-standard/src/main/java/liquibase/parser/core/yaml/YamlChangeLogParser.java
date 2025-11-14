@@ -40,7 +40,7 @@ public class YamlChangeLogParser extends YamlParser implements ChangeLogNodePars
 
             Object rootList = parsedYaml.get(DATABASE_CHANGE_LOG);
 
-            if (!(rootList instanceof List)) {
+            if (null != rootList && !(rootList instanceof List)) {
                 throw new ChangeLogParseException("databaseChangeLog does not contain a list of entries. Each changeSet must begin ' - changeSet:'");
             }
             ParsedNode databaseChangeLogNode = new ParsedNode(null, DATABASE_CHANGE_LOG);

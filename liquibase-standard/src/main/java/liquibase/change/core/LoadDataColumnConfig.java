@@ -18,7 +18,9 @@ public class LoadDataColumnConfig extends ColumnConfig {
     @Setter
     private Boolean allowUpdate;
     private LoadDataChange.LOAD_DATA_TYPE loadType;
-    private String nullPlaceholder;
+    @Setter
+	 @Getter
+	 private String nullPlaceholder;
 
     /**
      * Returns true if this Column should be updated. Returns null if update hasn't been explicitly assigned.
@@ -27,19 +29,7 @@ public class LoadDataColumnConfig extends ColumnConfig {
         return allowUpdate;
     }
 
-    public void setAllowUpdate(Boolean getAllowUpdate) {
-        this.allowUpdate = getAllowUpdate;
-    }
-
-    public String getNullPlaceholder() {
-        return nullPlaceholder;
-    }
-
-    public void setNullPlaceholder(String nullPlaceholder) {
-        this.nullPlaceholder = nullPlaceholder;
-    }
-
-    @Override
+	@Override
     public void load(ParsedNode parsedNode, ResourceAccessor resourceAccessor) throws ParsedNodeException {
         super.load(parsedNode, resourceAccessor);
         this.index = parsedNode.getChildValue(null, "index", Integer.class);
