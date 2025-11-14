@@ -99,12 +99,14 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
 
     private final PreconditionContainer preconditionContainer = new GlobalPreconditionContainer();
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private String physicalFilePath;
     @Setter
-    private String logicalFilePath;
+	 private String logicalFilePath;
 
-    @Getter @Setter
+    @Setter
+	 @Getter
     private ObjectQuotingStrategy objectQuotingStrategy;
 
     @Getter
@@ -123,28 +125,34 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
     @Getter
     private final List<ChangeSet> skippedBecauseOfPreconditionsChangeSets = new ArrayList<>();
 
-    @Getter  @Setter @Accessors(chain = true)
+    @Getter
+    @Setter @Accessors(chain = true)
     private ChangeLogParameters changeLogParameters;
 
-    @Getter @Setter
+    @Setter
+	 @Getter
     private RuntimeEnvironment runtimeEnvironment;
 
     @Setter
 	 private DatabaseChangeLog rootChangeLog = ROOT_CHANGE_LOG.get();
 
-    @Getter
+    @Setter
+	 @Getter
     private DatabaseChangeLog parentChangeLog = PARENT_CHANGE_LOG.get();
 
-    @Getter @Setter
+    @Setter
+	 @Getter
     private ContextExpression contextFilter;
 
-    @Getter @Setter
+    @Setter
+	 @Getter
     private ContextExpression includeContextFilter;
 
     @Getter
     private Labels includeLabels;
 
-	 @Getter @Setter
+    @Setter
+	 @Getter
     private boolean includeIgnore;
 
     @Getter
@@ -155,7 +163,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
     }
 
     public DatabaseChangeLog(String physicalFilePath) {
-		  this(physicalFilePath, new ChangeLogParameters());
+       this(physicalFilePath, new ChangeLogParameters());
     }
 
 	 public DatabaseChangeLog(String physicalFilePath, ChangeLogParameters changeLogParameters) {
@@ -164,20 +172,19 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
 	 	 this.changeLogParameters = changeLogParameters;
 	 }
 
-
-    public DatabaseChangeLog getRootChangeLog() {
+	public DatabaseChangeLog getRootChangeLog() {
         return (rootChangeLog != null) ? rootChangeLog : this;
     }
 
-    @Override
-    public PreconditionContainer getPreconditions() {
+	@Override
+   public PreconditionContainer getPreconditions() {
         return preconditionContainer;
     }
 
-    @Override
-    public void setPreconditions(PreconditionContainer precondition) {
-        this.preconditionContainer.addNestedPrecondition(precondition);
-    }
+   @Override
+   public void setPreconditions(PreconditionContainer precondition) {
+       this.preconditionContainer.addNestedPrecondition(precondition);
+   }
 
     public String getRawLogicalFilePath() {
         return logicalFilePath;
@@ -203,7 +210,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         }
     }
 
-	/**
+    /**
      * @deprecated use {@link #getContextFilter()}
      */
     @Deprecated
@@ -219,7 +226,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         setContextFilter(contexts);
     }
 
-	/**
+    /**
      * @deprecated Correct version is {@link #setIncludeLabels(Labels)}. Kept for backwards compatibility.
      */
     @Deprecated
@@ -231,7 +238,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         this.includeLabels = labels;
     }
 
-	/**
+    /**
      * @deprecated use {@link #setIncludeContextFilter(ContextExpression)}
      */
     @Deprecated
@@ -239,7 +246,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         setIncludeContextFilter(includeContexts);
     }
 
-	@Override
+    @Override
     public String toString() {
         return getFilePath();
     }

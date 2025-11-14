@@ -20,9 +20,8 @@ import liquibase.statement.SqlStatement;
 import liquibase.statement.core.RawCompoundStatement;
 import liquibase.statement.core.RawSqlStatement;
 import liquibase.util.StringUtil;
+import lombok.Getter;
 import lombok.Setter;
-import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static liquibase.statement.SqlStatement.EMPTY_SQL_STATEMENT;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 import static liquibase.change.ChangeParameterMetaData.ALL;
 import static liquibase.change.ChangeParameterMetaData.NONE;
 import static liquibase.util.ObjectUtil.cast;
@@ -52,27 +53,18 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
 
     @Deprecated
     private Boolean ignoreOriginalSplitStatements;
-    /**
-     *
-     * @deprecated  To be removed when splitStatements is changed to be type Boolean
-     *
-     */
+
+    /**  @deprecated  To be removed when splitStatements is changed to be type Boolean */
     @Deprecated
     private boolean splitStatementsSet;
-
-    /**
-     *  Sets the end delimiter for splitting SQL statements. Set to
-     *  to use the default delimiter.
-     *
-     * @param endDelimiter the end delimiter to set
-     */
     @Setter
     private String endDelimiter;
     private String sql;
     @Setter
     private String dbms;
 
-    private boolean stripCommentsUsedDefaultValue;
+    @Getter
+	 private boolean stripCommentsUsedDefaultValue;
 
     protected AbstractSQLChange() {
         setStripComments(null);
@@ -211,11 +203,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
         return splitStatementsSet;
     }
 
-    public boolean isStripCommentsUsedDefaultValue() {
-        return stripCommentsUsedDefaultValue;
-    }
-
-    /**
+	/**
      * Return the raw SQL managed by this Change
      */
     @DatabaseChangeProperty(serializationType = SerializationType.DIRECT_VALUE)
