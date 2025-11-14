@@ -21,8 +21,8 @@ import liquibase.statement.core.RawCompoundStatement;
 import liquibase.statement.core.RawSqlStatement;
 import liquibase.util.StringUtil;
 import lombok.Setter;
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.StringUtils.trimToNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -69,11 +69,10 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
     @Setter
     private String endDelimiter;
     private String sql;
+    @Setter
     private String dbms;
 
-    protected String encoding;
     private boolean stripCommentsUsedDefaultValue;
-
 
     protected AbstractSQLChange() {
         setStripComments(null);
@@ -112,11 +111,6 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
         return dbms;
     }
 
-    @Override
-    public void setDbms(final String dbms) {
-        this.dbms = dbms;
-    }
-
     /**
      * {@inheritDoc}
      * @param database
@@ -134,15 +128,13 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
 
     @Override
     public ValidationErrors validate(Database database) {
-        ValidationErrors validationErrors = new ValidationErrors();
-        if (StringUtils.trimToNull(sql) == null) {
-            validationErrors.addError("'sql' is required");
-        }
-        if(setProperty != null &&
-            getChangeSet().getChangeLog().getChangeLogParameters().hasValue(setProperty.name, setProperty.local ? getChangeSet().getChangeLog() : null)) {
-            validationErrors.addError(String.format("'%s' property is already defined! Cannot set new runtime value", setProperty));
-        }
+        ValidationErrors validationErrors = new ValidationErrors(this);
+		  if(setProperty != null &&
+				 getChangeSet().getChangeLog().getChangeLogParameters().hasValue(setProperty.name, setProperty.local ? getChangeSet().getChangeLog() : null)) {
+			   validationErrors.addError(String.format("'%s' property is already defined! Cannot set new runtime value", setProperty));
+		  }
         return validationErrors;
+
     }
 
     /**
@@ -212,6 +204,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
 
     /**
      * @deprecated  To be removed when splitStatements is changed to be Boolean type
+     * @return
      */
     @Deprecated
     public boolean isSplitStatementsSet() {
@@ -234,7 +227,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
      * Set the raw SQL managed by this Change. The passed sql is trimmed and set to null if an empty string is passed.
      */
     public void setSql(String sql) {
-       this.sql = StringUtils.trimToNull(sql);
+       this.sql = trimToNull(sql);
     }
 
     /**
@@ -260,7 +253,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
     }
 
     public void setSetProperty(String value) {
-        setProperty = new Property(StringUtils.trimToNull(value));
+        setProperty = new Property(trimToNull(value));
     }
 
     /**
@@ -292,8 +285,8 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
             if (version.lowerOrEqualThan(ChecksumVersion.V8)) {
                 boolean isSplitStatements = this.isSplitStatements();
                 if (getChangeSet() != null && getChangeSet().getRunWith() != null
-                        && !BooleanUtils.isTrue(isIgnoreOriginalSplitStatements()) && !isSplitStatements) {
-                    isSplitStatements = BooleanUtils.isTrue(originalSplitStatements);
+                        && !isTrue(isIgnoreOriginalSplitStatements()) && !isSplitStatements) {
+                    isSplitStatements = isTrue(originalSplitStatements);
                 }
                 return CheckSum.compute(new NormalizingStreamV8(this.getEndDelimiter(), isSplitStatements, this.isStripComments(), stream), false);
             }
@@ -329,7 +322,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
     @Override
     public SqlStatement[] generateStatements(Database database) {
         List<SqlStatement> returnStatements = new ArrayList<>();
-        String sql = StringUtils.trimToNull(getSql());
+        String sql = trimToNull(getSql());
         if (sql == null) {
             return EMPTY_SQL_STATEMENT;
         }

@@ -33,13 +33,14 @@ public class YamlChangeLogParser extends YamlParser implements ChangeLogNodePars
             if ((parsedYaml == null) || parsedYaml.isEmpty()) {
                 throw new ChangeLogParseException("Empty file " + physicalChangeLogLocation);
             }
+
             if (!parsedYaml.containsKey(DATABASE_CHANGE_LOG)) {
                 throw new ChangeLogParseException("Could not find databaseChangeLog node");
             }
 
             Object rootList = parsedYaml.get(DATABASE_CHANGE_LOG);
 
-            if (rootList != null && !(rootList instanceof List)) {
+            if (!(rootList instanceof List)) {
                 throw new ChangeLogParseException("databaseChangeLog does not contain a list of entries. Each changeSet must begin ' - changeSet:'");
             }
             ParsedNode databaseChangeLogNode = new ParsedNode(null, DATABASE_CHANGE_LOG);
