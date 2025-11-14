@@ -5,7 +5,6 @@ import liquibase.ExtensibleObject
 import liquibase.Scope
 import liquibase.change.Change
 import liquibase.changelog.ChangeLogHistoryServiceFactory
-import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.ChangeSet
 import liquibase.changelog.DatabaseChangeLog
 import liquibase.changelog.RanChangeSet
@@ -171,20 +170,9 @@ abstract class TestUtil {
      * @param resourceAccessor optional ResourceAccessor the change requires
      * @return the {@code change} instance with children loaded using ParsedNode
      */
-    static <T extends LiquibaseSerializable> T load(Map children, T obj,
-                                                    ResourceAccessor resourceAccessor = null) {
-        obj.load(parsedNode(children, obj.serializedObjectName ), resourceAccessor)
+    static <T extends LiquibaseSerializable> T load(Map children, T obj, ResourceAccessor resourceAccessor = null) {
+        obj.load( parsedNode( children, obj.serializedObjectName ), resourceAccessor)
         obj
-    }
-
-    static <T extends Change> T load(Map children, T change,
-                                     ChangeSet changeSet = new ChangeSet(new DatabaseChangeLog()),
-                                     ResourceAccessor resourceAccessor = null) {
-        change.load(parsedNode(children, change.serializedObjectName ), resourceAccessor)
-        if(null == change.getChangeSet()) {
-            changeSet.addChange(change)
-        }
-        change
     }
 
     /** Create a {@link ParsedNode} instance with the given {@code name} and {@code children} */
@@ -192,10 +180,13 @@ abstract class TestUtil {
         new ParsedNode(null, name).setValue(children)
     }
 
-    static DatabaseChangeLog databaseChangeLog(String file = 'dummy',
-                                               ChangeLogParameters params = new ChangeLogParameters()){
-        DatabaseChangeLog chLog = new DatabaseChangeLog(file)
-        chLog.changeLogParameters = params
-        chLog
-    }
+	 static <T extends Change> T load(Map children, T change,
+												ChangeSet changeSet = new ChangeSet(new DatabaseChangeLog()),
+												ResourceAccessor resourceAccessor = null) {
+		  change.load(parsedNode(children, change.serializedObjectName ), resourceAccessor)
+		  if(null == change.getChangeSet()) {
+			   changeSet.addChange(change)
+		  }
+		  change
+	 }
 }
