@@ -7,13 +7,15 @@
 
     <xsd:simpleType name="propertyExpression" id="propertyExpression">
         <xsd:restriction base="xsd:string">
-            <xsd:pattern value="\$\{[\w\.\-\+_]+\}"/>
+            <xsd:pattern value="$\{\:?[\w\.\-\+_]+\}"/>
         </xsd:restriction>
     </xsd:simpleType>
 
     <xsd:simpleType name="booleanExp" id="booleanExp">
         <xsd:annotation>
-            <xsd:documentation>Extension to standard XSD boolean type to allow ${parameter} placeholders</xsd:documentation>
+            <xsd:appinfo>
+                <xsd:documentation>Extension to standard XSD boolean type to allow ${} parameters</xsd:documentation>
+            </xsd:appinfo>
         </xsd:annotation>
         <xsd:union>
             <xsd:simpleType>
@@ -27,7 +29,9 @@
 
     <xsd:simpleType name="integerExp" id="integerExp">
         <xsd:annotation>
-            <xsd:documentation>Extension to standard XSD integer type to allow ${parameter} placeholders</xsd:documentation>
+            <xsd:appinfo>
+                <xsd:documentation>Extension to standard XSD integer type to allow ${} parameters</xsd:documentation>
+            </xsd:appinfo>
         </xsd:annotation>
         <xsd:union>
             <xsd:simpleType>
@@ -92,13 +96,16 @@
     <!-- include -->
     <xsd:element name="include">
         <xsd:complexType>
-            <xsd:attribute name="file" type="nonEmptyString" use="required"/>
+            <xsd:attribute name="id" type="xsd:string"/>
+            <xsd:attribute name="author" type="xsd:string"/>
+            <xsd:attribute name="file" type="xsd:string" use="required"/>
             <xsd:attribute name="relativeToChangelogFile" type="booleanExp"/>
             <xsd:attribute name="errorIfMissing" type="booleanExp" default="true"/>
             <xsd:attribute name="context" type="xsd:string"/>
             <xsd:attribute name="contextFilter" type="xsd:string"/>
             <xsd:attribute name="labels" type="xsd:string"/>
             <xsd:attribute name="ignore" type="xsd:string"/>
+            <xsd:attribute name="created" type="xsd:string"/>
             <xsd:attribute name="logicalFilePath" type="xsd:string"/>
             <xsd:anyAttribute namespace="##other" processContents="lax"/>
         </xsd:complexType>
@@ -107,7 +114,7 @@
     <!-- includeAll -->
     <xsd:element name="includeAll">
         <xsd:complexType>
-            <xsd:attribute name="path" type="nonEmptyString" use="required"/>
+            <xsd:attribute name="path" type="xsd:string" use="required"/>
             <xsd:attribute name="errorIfMissingOrEmpty" type="booleanExp" default="true"/>
             <xsd:attribute name="relativeToChangelogFile" type="booleanExp"/>
             <xsd:attribute name="resourceComparator" type="xsd:string"/>
@@ -141,21 +148,23 @@
                 </xsd:element>
                 <xsd:element name="property" minOccurs="0" maxOccurs="unbounded">
                     <xsd:complexType>
-                        <xsd:attribute name="file" type="nonEmptyString"/>
-                        <xsd:attribute name="relativeToChangelogFile" type="booleanExp"/>
-                        <xsd:attribute name="errorIfMissing" type="booleanExp"/>
-                        <xsd:attribute name="name" type="propertyName"/>
+                        <xsd:attribute name="file" type="xsd:string"/>
+                        <xsd:attribute name="relativeToChangelogFile" type="booleanExp" default="false"/>
+                        <xsd:attribute name="errorIfMissing" type="booleanExp" default="true"/>
+                        <xsd:attribute name="name" type="xsd:string"/>
                         <xsd:attribute name="value" type="xsd:string"/>
                         <xsd:attribute name="dbms" type="xsd:string"/>
                         <xsd:attribute name="context" type="xsd:string"/>
                         <xsd:attribute name="contextFilter" type="xsd:string"/>
                         <xsd:attribute name="labels" type="xsd:string"/>
-                        <xsd:attribute name="global" type="booleanExp"/>
+                        <xsd:attribute name="global" type="xsd:boolean"/>
+                        <xsd:attribute name="target" type="xsd:string"/>
                         <xsd:anyAttribute namespace="##other" processContents="lax"/>
                     </xsd:complexType>
                 </xsd:element>
 
-                <xsd:element name="preConditions" minOccurs="0" maxOccurs="unbounded">
+                <xsd:element name="preConditions" minOccurs="0"
+                             maxOccurs="1">
                     <xsd:complexType>
                         <xsd:choice>
                             <xsd:group ref="PreConditionChildren" maxOccurs="unbounded"/>
@@ -187,11 +196,13 @@
                                 <xsd:element name="preConditions" minOccurs="0"
                                              maxOccurs="1">
                                     <xsd:annotation>
-                                        <xsd:documentation>onChangeLogPreconditionOnSqlOutput determines what should
-                                            happen when evaluating this precondition in updateSQL mode. TEST: Run
-                                            precondition, FAIL: Fail precondition, IGNORE: Skip precondition check
-                                            [DEFAULT]
-                                        </xsd:documentation>
+                                        <xsd:appinfo>
+                                            <xsd:documentation>onChangeLogPreconditionOnSqlOutput determines what should
+                                                happen when evaluating this precondition in updateSQL mode. TEST: Run
+                                                precondition, FAIL: Fail precondition, IGNORE: Skip precondition check
+                                                [DEFAULT]
+                                            </xsd:documentation>
+                                        </xsd:appinfo>
                                     </xsd:annotation>
                                     <xsd:complexType>
                                         <xsd:choice>
@@ -833,11 +844,7 @@
 
     <xsd:element name="changeLogPropertyDefined">
         <xsd:complexType>
-            <xsd:annotation>
-                <xsd:documentation>Check if the changeLog property with the name in @property is set to @value.
-                    If @value is not defined checks only if the property is defined at all</xsd:documentation>
-            </xsd:annotation>
-            <xsd:attribute name="property" type="propertyName" use="required"/>
+            <xsd:attribute name="property" type="xsd:string" use="required"/>
             <xsd:attribute name="value" type="xsd:string"/>
         </xsd:complexType>
     </xsd:element>
@@ -1156,15 +1163,27 @@
             </xsd:annotation>
         </xsd:attribute>
         <xsd:attribute name="dbms" type="xsd:string"/>
-        <xsd:attribute name="setProperty" type="nonEmptyString">
+        <xsd:attribute name="setProperty">
             <xsd:annotation>
                 <xsd:documentation>Name of the property set from the result of this sql's statement(s).
                     The last statement has to return a single row with the first column containing the
                     new value of the property.
-                    If the name starts with 'local:' the property is defined as local to the changeset.
-                    Property is created as global otherwise
+                    If the name starts with 'global:' the property is defined as global to the changeset.
+                    Property is created as local otherwise
                 </xsd:documentation>
             </xsd:annotation>
+            <xsd:simpleType>
+                <xsd:union>
+                    <xsd:simpleType>
+                        <xsd:restriction base="propertyName"/>
+                    </xsd:simpleType>
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:string">
+                            <xsd:pattern value="global:[\w\.\-\+_]+"/>
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:union>
+            </xsd:simpleType>
         </xsd:attribute>
         <xsd:attributeGroup ref="changeAttributes"/>
     </xsd:attributeGroup>
