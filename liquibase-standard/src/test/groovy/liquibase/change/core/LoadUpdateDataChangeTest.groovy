@@ -1,11 +1,9 @@
 package liquibase.change.core
 
-import liquibase.ChecksumVersion
 import liquibase.Scope
 import liquibase.change.ChangeStatus
 import liquibase.database.core.PostgresDatabase
 import liquibase.database.DatabaseConnection
-import liquibase.integration.commandline.LiquibaseCommandLineConfiguration
 import liquibase.snapshot.MockSnapshotGeneratorFactory
 import liquibase.snapshot.SnapshotGeneratorFactory
 import liquibase.change.StandardChangeTest;
@@ -14,9 +12,11 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.statement.SqlStatement
 import liquibase.statement.core.InsertOrUpdateStatement
 import liquibase.database.core.MSSQLDatabase
-import spock.lang.Unroll
 
-public class LoadUpdateDataChangeTest extends StandardChangeTest {
+import static liquibase.ChecksumVersion.V8
+import static liquibase.ChecksumVersion.V9
+
+class LoadUpdateDataChangeTest extends StandardChangeTest {
 
     def getConfirmationMessage() throws Exception {
         when:
@@ -120,8 +120,7 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
         assert statements[0].getOnlyUpdate()
     }
 
-    @Unroll
-    def "generateChecksum produces different values with each field - #version"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "generateChecksum produces different values with each field - #version"() {
         when:
         LoadUpdateDataChange refactoring = new LoadUpdateDataChange();
         refactoring.setSchemaName("SCHEMA_NAME");
@@ -142,8 +141,8 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:cce1423feea9e29192ef7c306eda0c94"
-        ChecksumVersion.latest() | "9:55d574d66869989f7208b9f05b7409bb" | "9:b0cc70905a4b9db9211c05392fd08f08"
+        V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:cce1423feea9e29192ef7c306eda0c94"
+        V9 | "9:8280319eac780c3792e7cdd2de099891" | "9:a6cb98554859c3096cfdebdfe1ef39e5"
     }
 
     @Override
@@ -164,8 +163,7 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
         assert change.checkStatus(database).message == "Cannot check loadUpdateData status"
     }
 
-    @Unroll
-    def "checksum does not change when no comments in CSV and comment property changes"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum does not change when no comments in CSV and comment property changes"() {
         when:
         LoadUpdateDataChange refactoring = new LoadUpdateDataChange();
         refactoring.setSchemaName("SCHEMA_NAME");
@@ -189,12 +187,11 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:a91f2379b2b3b4c4a5a571b8e7409081"
-        ChecksumVersion.latest() | "9:55d574d66869989f7208b9f05b7409bb" | "9:55d574d66869989f7208b9f05b7409bb"
+        V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:a91f2379b2b3b4c4a5a571b8e7409081"
+        V9 | "9:8280319eac780c3792e7cdd2de099891" | "9:8280319eac780c3792e7cdd2de099891"
     }
 
-    @Unroll
-    def "checksum changes when there are comments in CSV"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum changes when there are comments in CSV"() {
         when:
         LoadUpdateDataChange refactoring = new LoadUpdateDataChange();
         refactoring.setSchemaName("SCHEMA_NAME");
@@ -217,12 +214,11 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:becddfbcfda2ec516371ed36aaf1137a" | "8:e51a6408e921cfa151c50c7d90cf5baa"
-        ChecksumVersion.latest() | "9:c02972964ae29d51fa8e7801951fbb70" | "9:91298c1042fcb57394a242e8c838ce51"
+        V8 | "8:becddfbcfda2ec516371ed36aaf1137a" | "8:e51a6408e921cfa151c50c7d90cf5baa"
+        V9 | "9:83b74801c8e40d12eeb850da86ef5810" | "9:b470f206c5378dcea289ad01ac64e0b3"
     }
 
-    @Unroll
-    def "checksum same for CSV files with comments and file with removed comments manually - #version"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum same for CSV files with comments and file with removed comments manually - #version"() {
         when:
         LoadUpdateDataChange refactoring = new LoadUpdateDataChange();
         refactoring.setSchemaName("SCHEMA_NAME");
@@ -246,7 +242,33 @@ public class LoadUpdateDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:e51a6408e921cfa151c50c7d90cf5baa" | "8:e51a6408e921cfa151c50c7d90cf5baa"
-        ChecksumVersion.latest() | "9:91298c1042fcb57394a242e8c838ce51" | "9:91298c1042fcb57394a242e8c838ce51"
+        V8 | "8:e51a6408e921cfa151c50c7d90cf5baa" | "8:e51a6408e921cfa151c50c7d90cf5baa"
+        V9 | "9:b470f206c5378dcea289ad01ac64e0b3" | "9:b470f206c5378dcea289ad01ac64e0b3"
+    }
+
+    def "checksum change, when primaryKey change - #version"() {
+        when:
+        LoadUpdateDataChange loadData = new LoadUpdateDataChange();
+        loadData.setTableName("TABLE_NAME");
+        loadData.setFile("liquibase/change/core/sample.data.csv");
+        loadData.setPrimaryKey("name")
+
+        String md5sum1 = Scope.child([(Scope.Attr.checksumVersion.name()): version], {
+            return loadData.generateCheckSum().toString()
+        } as Scope.ScopedRunnerWithReturn<String>)
+
+        loadData.setPrimaryKey("name,num"); // change primaryKey
+        String md5sum2 = Scope.child([(Scope.Attr.checksumVersion.name()): version], {
+            return loadData.generateCheckSum().toString()
+        } as Scope.ScopedRunnerWithReturn<String>)
+
+        then:
+        md5sum1 == originalChecksum
+        md5sum2 == updatedChecksum
+
+        where:
+        version | originalChecksum | updatedChecksum
+        V8 | "8:4af58779b39536e9d945384894337fce" | "8:4af58779b39536e9d945384894337fce"
+        V9 | "9:84befedcb2f96ad1327863a031106f2d" | "9:2080d19736489c17a377500bbf16177b"
     }
 }

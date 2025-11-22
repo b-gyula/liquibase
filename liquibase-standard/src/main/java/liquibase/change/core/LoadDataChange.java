@@ -2,6 +2,7 @@ package liquibase.change.core;
 
 import com.opencsv.exceptions.CsvMalformedLineException;
 import liquibase.CatalogAndSchema;
+import liquibase.ChecksumVersion;
 import liquibase.GlobalConfiguration;
 import liquibase.Scope;
 import liquibase.change.*;
@@ -77,13 +78,18 @@ public class LoadDataChange extends AbstractTableChange
     private Boolean relativeToChangelogFile;
     @Setter
     private String encoding;
-    private String separator = CSVReader.DEFAULT_SEPARATOR + "";
+    private String separator = DEFAULT_SEPARATOR;
     @Setter
-    private String quotchar = CSVReader.DEFAULT_QUOTE_CHARACTER + "";
+    private String quotchar = DEFAULT_QUOTCHAR;
     private List<LoadDataColumnConfig> columns = new ArrayList<>();
 
     @Setter
     private Boolean usePreparedStatements;
+
+    final static String SEPARATOR = "separator";
+    final static String DEFAULT_SEPARATOR =  CSVReader.DEFAULT_SEPARATOR + "";
+    final static String DEFAULT_QUOTCHAR =  CSVReader.DEFAULT_QUOTE_CHARACTER + "";
+    final static String QUOTCHAR = "quotchar";
 
     /**
      * Transform a value read from a CSV file into a string to be written into the database if the column type
@@ -654,6 +660,9 @@ public class LoadDataChange extends AbstractTableChange
     @Override
     public ValidationErrors validate(Database database) {
         ValidationErrors validationErrors = super.validate(database);
+		if(null == separator || separator.isEmpty()) {
+		 validationErrors.addError("'separator' is empty for '" + getSerializedObjectName() + "'");
+		}
         return validateColumns(validationErrors);
     }
 
@@ -737,8 +746,8 @@ public class LoadDataChange extends AbstractTableChange
             quotchar = this.quotchar.charAt(0);
         }
 
-        if (separator == null) {
-            separator = CSVReader.DEFAULT_SEPARATOR + "";
+        if (separator == null || separator.isEmpty()) {
+            separator = DEFAULT_SEPARATOR;
         }
 
         return new CSVReader(streamReader, separator.charAt(0), quotchar);
@@ -793,13 +802,32 @@ public class LoadDataChange extends AbstractTableChange
         return String.format(coreBundle.getString("loaddata.successful"), getFile(), getTableName());
     }
 
+    static final List<String> alwaysExcludedFields = List.of("file", "relativeToChangelogFile", "encoding",
+          "usePreparedStatements",
+          "commentLineStartsWith");
+
+    public String[] getExcludedFieldFilters(ChecksumVersion version) {
+        ArrayList<String> fields = new ArrayList<>(alwaysExcludedFields);
+
+        if( ! DEFAULT_SEPARATOR.equals( getSeparator() )) {
+            fields.add(SEPARATOR);
+        }
+        if( ! DEFAULT_QUOTCHAR.equals( getQuotchar() ) ) {
+            fields.add(QUOTCHAR);
+        }
+        return fields.toArray(new String[fields.size()]);
+    }
+
     @Override
     public CheckSum generateCheckSum() {
         InputStream stream = null;
         try {
             Resource resource = getResource();
             stream = new EmptyLineAndCommentSkippingInputStream(resource.openInputStream(), commentLineStartsWith);
-            return CheckSum.compute(getTableName() + ":" + CheckSum.compute(stream, /*standardizeLineEndings*/ true));
+            if (Scope.getCurrentScope().getChecksumVersion().lowerOrEqualThan(ChecksumVersion.V8)) {
+                return CheckSum.compute(getTableName() + ":" + CheckSum.compute(stream, /*standardizeLineEndings*/ true));
+            }
+            return CheckSum.compute(super.generateCheckSum() + ":" + CheckSum.compute(stream, /*standardizeLineEndings*/ true));
         } catch (IOException e) {
             throw new UnexpectedLiquibaseException(e);
         } finally {
