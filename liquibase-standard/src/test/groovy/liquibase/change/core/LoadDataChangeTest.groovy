@@ -40,6 +40,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+import static liquibase.ChecksumVersion.V8
+import static liquibase.ChecksumVersion.V9
+
 class LoadDataChangeTest extends StandardChangeTest {
 
     MSSQLDatabase mssqlDb
@@ -56,8 +59,6 @@ class LoadDataChangeTest extends StandardChangeTest {
         mockDb = new MockDatabase()
         mockDb.setConnection((DatabaseConnection) null)
     }
-
-
 
     def "column with clob datatype is path or string"(){
         when:
@@ -390,8 +391,8 @@ class LoadDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:cce1423feea9e29192ef7c306eda0c94"
-        ChecksumVersion.latest() | "9:55d574d66869989f7208b9f05b7409bb" | "9:b0cc70905a4b9db9211c05392fd08f08"
+        V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:cce1423feea9e29192ef7c306eda0c94"
+        latest() | "9:2f3e439411af89de45ad63dc9f2dcbb1" | "9:fbc7a9f6a078cc4787d9d8afd0e52a6e"
     }
 
     @Override
@@ -490,8 +491,7 @@ class LoadDataChangeTest extends StandardChangeTest {
         "users.csv"               | "a/logical/path.xml" | true
     }
 
-    @Unroll
-    def "checksum does not change when no comments in CSV and comment property changes - #version"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum does not change when no comments in CSV and comment property changes - #version"() {
         when:
         LoadDataChange refactoring = new LoadDataChange()
         refactoring.setSchemaName("SCHEMA_NAME")
@@ -514,12 +514,11 @@ class LoadDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:a91f2379b2b3b4c4a5a571b8e7409081"
-        ChecksumVersion.latest() | "9:55d574d66869989f7208b9f05b7409bb" | "9:55d574d66869989f7208b9f05b7409bb"
+        V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:a91f2379b2b3b4c4a5a571b8e7409081"
+        V9 | "9:2f3e439411af89de45ad63dc9f2dcbb1" | "9:2f3e439411af89de45ad63dc9f2dcbb1"
     }
 
-    @Unroll
-    def "checksum changes when there are comments in CSV - #version"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum changes when there are comments in CSV - #version"() {
         when:
         LoadDataChange refactoring = new LoadDataChange()
         refactoring.setSchemaName("SCHEMA_NAME")
@@ -542,12 +541,11 @@ class LoadDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:becddfbcfda2ec516371ed36aaf1137a" | "8:e51a6408e921cfa151c50c7d90cf5baa"
-        ChecksumVersion.latest() | "9:c02972964ae29d51fa8e7801951fbb70" | "9:91298c1042fcb57394a242e8c838ce51"
+        V8 | "8:becddfbcfda2ec516371ed36aaf1137a" | "8:e51a6408e921cfa151c50c7d90cf5baa"
+        V9 | "9:2d58c15add5f2e3db317a519bf9ee950" | "9:6fe4d1b186038294b83667ced10e6db7"
     }
 
-    @Unroll
-    def "checksum same for CSV files with comments and file with removed comments manually - #version"(ChecksumVersion version, String originalChecksum, String updatedChecksum) {
+    def "checksum same for CSV files with comments and file with removed comments manually - #version"() {
         when:
         LoadDataChange refactoring = new LoadDataChange()
         refactoring.setSchemaName("SCHEMA_NAME")
@@ -571,8 +569,33 @@ class LoadDataChangeTest extends StandardChangeTest {
 
         where:
         version | originalChecksum | updatedChecksum
-        ChecksumVersion.V8 | "8:e51a6408e921cfa151c50c7d90cf5baa" | "8:e51a6408e921cfa151c50c7d90cf5baa"
-        ChecksumVersion.latest() | "9:91298c1042fcb57394a242e8c838ce51" | "9:91298c1042fcb57394a242e8c838ce51"
+        V8 | "8:e51a6408e921cfa151c50c7d90cf5baa" | "8:e51a6408e921cfa151c50c7d90cf5baa"
+        V9 | "9:6fe4d1b186038294b83667ced10e6db7" | "9:6fe4d1b186038294b83667ced10e6db7"
+    }
+
+    def "checksum changes when separator changes above v8 - #version"() {
+        when:
+        LoadDataChange loadData = new LoadDataChange()
+        loadData.setTableName("TABLE_NAME")
+        loadData.setFile("liquibase/change/core/sample.data.csv")
+
+        String md5sum1 = Scope.child([(Scope.Attr.checksumVersion.name()): version], {
+            return loadData.generateCheckSum().toString()
+        } as Scope.ScopedRunnerWithReturn<String>)
+
+        loadData.setSeparator(" ")
+        String md5sum2 = Scope.child([(Scope.Attr.checksumVersion.name()): version], {
+            return loadData.generateCheckSum().toString()
+        } as Scope.ScopedRunnerWithReturn<String>)
+
+        then:
+        md5sum1 == originalChecksum
+        md5sum2 == updatedChecksum
+
+        where:
+        version | originalChecksum | updatedChecksum
+        V8 | "8:4af58779b39536e9d945384894337fce" | "8:4af58779b39536e9d945384894337fce"
+        V9 | "9:a9393081b4d51b9d2de11ce6df38d498" | "9:ab36e9a9f1259e11d425ac4d6e2b2d13"
     }
 
     def "usePreparedStatements set to false produces InsertSetStatement"() throws Exception {
@@ -787,7 +810,6 @@ class LoadDataChangeTest extends StandardChangeTest {
         columnValue(sqlStatements[2], Col.name) != "defName"
         columnValue(sqlStatements[2], Col.id) != 1
     }
-
 
     def "NULL placeholder handling"() {
         when:
@@ -1017,8 +1039,6 @@ class LoadDataChangeTest extends StandardChangeTest {
         assert columnValue(sqlStatements[1], "username") == "jdoe"
     }
 
-
-
     class ColDef {
         ColDef(Object n, String type) {
             this.name = n.toString()
@@ -1047,6 +1067,7 @@ class LoadDataChangeTest extends StandardChangeTest {
             return name();
         }
     }
+
     class FakeLoadDataChangeExtension extends LoadDataChange {
         def rows
 
