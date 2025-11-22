@@ -392,7 +392,7 @@ class LoadDataChangeTest extends StandardChangeTest {
         where:
         version | originalChecksum | updatedChecksum
         V8 | "8:a91f2379b2b3b4c4a5a571b8e7409081" | "8:cce1423feea9e29192ef7c306eda0c94"
-        latest() | "9:2f3e439411af89de45ad63dc9f2dcbb1" | "9:fbc7a9f6a078cc4787d9d8afd0e52a6e"
+        V9 | "9:2f3e439411af89de45ad63dc9f2dcbb1" | "9:fbc7a9f6a078cc4787d9d8afd0e52a6e"
     }
 
     @Override
