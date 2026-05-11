@@ -1352,7 +1352,7 @@ public class Main {
                     }
 
                 } else {
-                    URL newUrl = null;
+                    URL newUrl;
                     try {
                         newUrl = new File(classpathEntry).toURI().toURL();
                     } catch (MalformedURLException e) {
@@ -1482,21 +1482,15 @@ public class Main {
                 dropAllCommand.execute();
                 return;
             } else if (COMMANDS.STATUS.equalsIgnoreCase(command)) {
-                boolean runVerbose = false;
+                boolean runVerbose = commandParams.contains("--" + OPTIONS.VERBOSE);
 
-                if (commandParams.contains("--" + OPTIONS.VERBOSE)) {
-                    runVerbose = true;
-                }
-                liquibase.reportStatus(runVerbose, new Contexts(contexts), new LabelExpression(getLabelFilter()),
+					liquibase.reportStatus(runVerbose, new Contexts(contexts), new LabelExpression(getLabelFilter()),
                         getOutputWriter());
                 return;
             } else if (COMMANDS.UNEXPECTED_CHANGESETS.equalsIgnoreCase(command)) {
-                boolean runVerbose = false;
+                boolean runVerbose = commandParams.contains("--" + OPTIONS.VERBOSE);
 
-                if (commandParams.contains("--" + OPTIONS.VERBOSE)) {
-                    runVerbose = true;
-                }
-                liquibase.reportUnexpectedChangeSets(runVerbose, contexts, getOutputWriter());
+					liquibase.reportUnexpectedChangeSets(runVerbose, contexts, getOutputWriter());
                 return;
             } else if (COMMANDS.VALIDATE.equalsIgnoreCase(command)) {
                 liquibase.validate();
@@ -2133,97 +2127,97 @@ public class Main {
     }
 
     @SuppressWarnings("HardCodedStringLiteral")
-    private enum COMMANDS {
+    public enum COMMANDS {
         ;
-        private static final String CALCULATE_CHECKSUM = "calculateCheckSum";
-        private static final String CHANGELOG_SYNC = "changelogSync";
-        private static final String CHANGELOG_SYNC_SQL = "changelogSyncSQL";
-        private static final String CHANGELOG_SYNC_TO_TAG = "changelogSyncToTag";
-        private static final String CHANGELOG_SYNC_TO_TAG_SQL = "changelogSyncToTagSQL";
-        private static final String CLEAR_CHECKSUMS = "clearCheckSums";
-        private static final String DB_DOC = "dbDoc";
-        private static final String DIFF = "diff";
-        private static final String DIFF_CHANGELOG = "diffChangeLog";
-        private static final String DROP_ALL = "dropAll";
-        private static final String EXECUTE_SQL = "executeSql";
-        private static final String FUTURE_ROLLBACK_COUNT_SQL = "futureRollbackCountSQL";
-        private static final String FUTURE_ROLLBACK_FROM_TAG_SQL = "futureRollbackFromTagSQL";
-        private static final String FUTURE_ROLLBACK_SQL = "futureRollbackSQL";
-        private static final String GENERATE_CHANGELOG = "generateChangeLog";
-        private static final String HELP = OPTIONS.HELP;
-        private static final String HISTORY = "history";
-        private static final String LIST_LOCKS = "listLocks";
-        private static final String MARK_NEXT_CHANGESET_RAN = "markNextChangeSetRan";
-        private static final String MARK_NEXT_CHANGESET_RAN_SQL = "markNextChangeSetRanSQL";
-        private static final String MIGRATE = "migrate";
-        private static final String MIGRATE_SQL = "migrateSQL";
-        private static final String RELEASE_LOCKS = "releaseLocks";
-        private static final String ROLLBACK_ONE_CHANGE_SET = "rollbackOneChangeSet";
-        private static final String ROLLBACK_ONE_CHANGE_SET_SQL = "rollbackOneChangeSetSQL";
-        private static final String ROLLBACK_ONE_UPDATE = "rollbackOneUpdate";
-        private static final String ROLLBACK_ONE_UPDATE_SQL = "rollbackOneUpdateSQL";
-        private static final String FORMATTED_DIFF = "formattedDiff";
-        private static final String ROLLBACK = "rollback";
-        private static final String ROLLBACK_COUNT = "rollbackCount";
-        private static final String ROLLBACK_COUNT_SQL = "rollbackCountSQL";
-        private static final String ROLLBACK_SCRIPT = "rollbackScript";
-        private static final String ROLLBACK_SQL = "rollbackSQL";
-        private static final String ROLLBACK_TO_DATE = "rollbackToDate";
-        private static final String ROLLBACK_TO_DATE_SQL = "rollbackToDateSQL";
-        private static final String SNAPSHOT = "snapshot";
-        private static final String SNAPSHOT_REFERENCE = "snapshotReference";
-        private static final String STATUS = "status";
-        private static final String TAG = "tag";
-        private static final String TAG_EXISTS = "tagExists";
-        private static final String UNEXPECTED_CHANGESETS = "unexpectedChangeSets";
-        private static final String UPDATE = "update";
-        private static final String UPDATE_COUNT = "updateCount";
-        private static final String UPDATE_COUNT_SQL = "updateCountSQL";
-        private static final String UPDATE_SQL = "updateSQL";
-        private static final String UPDATE_TESTING_ROLLBACK = "updateTestingRollback";
-        private static final String UPDATE_TO_TAG = "updateToTag";
-        private static final String UPDATE_TO_TAG_SQL = "updateToTagSQL";
-        private static final String VALIDATE = "validate";
+        public static final String CALCULATE_CHECKSUM = "calculateCheckSum";
+        public static final String CHANGELOG_SYNC = "changelogSync";
+        public static final String CHANGELOG_SYNC_SQL = "changelogSyncSQL";
+        public static final String CHANGELOG_SYNC_TO_TAG = "changelogSyncToTag";
+        public static final String CHANGELOG_SYNC_TO_TAG_SQL = "changelogSyncToTagSQL";
+        public static final String CLEAR_CHECKSUMS = "clearCheckSums";
+        public static final String DB_DOC = "dbDoc";
+        public static final String DIFF = "diff";
+        public static final String DIFF_CHANGELOG = "diffChangeLog";
+        public static final String DROP_ALL = "dropAll";
+        public static final String EXECUTE_SQL = "executeSql";
+        public static final String FUTURE_ROLLBACK_COUNT_SQL = "futureRollbackCountSQL";
+        public static final String FUTURE_ROLLBACK_FROM_TAG_SQL = "futureRollbackFromTagSQL";
+        public static final String FUTURE_ROLLBACK_SQL = "futureRollbackSQL";
+        public static final String GENERATE_CHANGELOG = "generateChangeLog";
+        public static final String HELP = OPTIONS.HELP;
+        public static final String HISTORY = "history";
+        public static final String LIST_LOCKS = "listLocks";
+        public static final String MARK_NEXT_CHANGESET_RAN = "markNextChangeSetRan";
+        public static final String MARK_NEXT_CHANGESET_RAN_SQL = "markNextChangeSetRanSQL";
+        public static final String MIGRATE = "migrate";
+        public static final String MIGRATE_SQL = "migrateSQL";
+        public static final String RELEASE_LOCKS = "releaseLocks";
+        public static final String ROLLBACK_ONE_CHANGE_SET = "rollbackOneChangeSet";
+        public static final String ROLLBACK_ONE_CHANGE_SET_SQL = "rollbackOneChangeSetSQL";
+        public static final String ROLLBACK_ONE_UPDATE = "rollbackOneUpdate";
+        public static final String ROLLBACK_ONE_UPDATE_SQL = "rollbackOneUpdateSQL";
+        public static final String FORMATTED_DIFF = "formattedDiff";
+        public static final String ROLLBACK = "rollback";
+        public static final String ROLLBACK_COUNT = "rollbackCount";
+        public static final String ROLLBACK_COUNT_SQL = "rollbackCountSQL";
+        public static final String ROLLBACK_SCRIPT = "rollbackScript";
+        public static final String ROLLBACK_SQL = "rollbackSQL";
+        public static final String ROLLBACK_TO_DATE = "rollbackToDate";
+        public static final String ROLLBACK_TO_DATE_SQL = "rollbackToDateSQL";
+        public static final String SNAPSHOT = "snapshot";
+        public static final String SNAPSHOT_REFERENCE = "snapshotReference";
+        public static final String STATUS = "status";
+        public static final String TAG = "tag";
+        public static final String TAG_EXISTS = "tagExists";
+        public static final String UNEXPECTED_CHANGESETS = "unexpectedChangeSets";
+        public static final String UPDATE = "update";
+        public static final String UPDATE_COUNT = "updateCount";
+        public static final String UPDATE_COUNT_SQL = "updateCountSQL";
+        public static final String UPDATE_SQL = "updateSQL";
+        public static final String UPDATE_TESTING_ROLLBACK = "updateTestingRollback";
+        public static final String UPDATE_TO_TAG = "updateToTag";
+        public static final String UPDATE_TO_TAG_SQL = "updateToTagSQL";
+        public static final String VALIDATE = "validate";
     }
 
     @SuppressWarnings("HardCodedStringLiteral")
-    private enum OPTIONS {
+    public enum OPTIONS {
         ;
-        private static final String VERBOSE = "verbose";
-        private static final String CHANGELOG_FILE = "changeLogFile";
-        private static final String DATA_OUTPUT_DIRECTORY = "dataOutputDirectory";
-        private static final String DIFF_TYPES = "diffTypes";
+        public static final String VERBOSE = "verbose";
+        public static final String CHANGELOG_FILE = "changeLogFile";
+        public static final String DATA_OUTPUT_DIRECTORY = "dataOutputDirectory";
+        public static final String DIFF_TYPES = "diffTypes";
 
         public static final String CHANGE_SET_IDENTIFIER = "changeSetIdentifier";
-        private static final String CHANGE_SET_ID = "changeSetId";
-        private static final String CHANGE_SET_AUTHOR = "changeSetAuthor";
-        private static final String CHANGE_SET_PATH = "changeSetPath";
-        private static final String DEPLOYMENT_ID = "deploymentId";
-        private static final String OUTPUT_FILE = "outputFile";
-        private static final String FORCE = "force";
-        private static final String FORMAT = "format";
-        private static final String ROLLBACK_SCRIPT = "rollbackScript";
-        private static final String EXCLUDE_OBJECTS = "excludeObjects";
-        private static final String INCLUDE_CATALOG = "includeCatalog";
-        private static final String INCLUDE_OBJECTS = "includeObjects";
-        private static final String INCLUDE_SCHEMA = "includeSchema";
-        private static final String INCLUDE_TABLESPACE = "includeTablespace";
-        private static final String OUTPUT_SCHEMAS_AS = "outputSchemasAs";
-        private static final String REFERENCE_DEFAULT_CATALOG_NAME = "referenceDefaultCatalogName";
-        private static final String REFERENCE_DEFAULT_SCHEMA_NAME = "referenceDefaultSchemaName";
-        private static final String REFERENCE_DRIVER = "referenceDriver";
+        public static final String CHANGE_SET_ID = "changeSetId";
+        public static final String CHANGE_SET_AUTHOR = "changeSetAuthor";
+        public static final String CHANGE_SET_PATH = "changeSetPath";
+        public static final String DEPLOYMENT_ID = "deploymentId";
+        public static final String OUTPUT_FILE = "outputFile";
+        public static final String FORCE = "force";
+        public static final String FORMAT = "format";
+        public static final String ROLLBACK_SCRIPT = "rollbackScript";
+        public static final String EXCLUDE_OBJECTS = "excludeObjects";
+        public static final String INCLUDE_CATALOG = "includeCatalog";
+        public static final String INCLUDE_OBJECTS = "includeObjects";
+        public static final String INCLUDE_SCHEMA = "includeSchema";
+        public static final String INCLUDE_TABLESPACE = "includeTablespace";
+        public static final String OUTPUT_SCHEMAS_AS = "outputSchemasAs";
+        public static final String REFERENCE_DEFAULT_CATALOG_NAME = "referenceDefaultCatalogName";
+        public static final String REFERENCE_DEFAULT_SCHEMA_NAME = "referenceDefaultSchemaName";
+        public static final String REFERENCE_DRIVER = "referenceDriver";
         // SONAR confuses this constant name with a hard-coded password:
         @SuppressWarnings("squid:S2068")
-        private static final String REFERENCE_PASSWORD = "referencePassword";
-        private static final String REFERENCE_SCHEMAS = "referenceSchemas";
-        private static final String REFERENCE_URL = "referenceUrl";
-        private static final String REFERENCE_USERNAME = "referenceUsername";
-        private static final String SCHEMAS = "schemas";
-        private static final String URL = "url";
-        private static final String HELP = "help";
-        private static final String VERSION = "version";
-        private static final String SNAPSHOT_FORMAT = "snapshotFormat";
-        private static final String LOG_FILE = "logFile";
-        private static final String LOG_LEVEL = "logLevel";
+        public static final String REFERENCE_PASSWORD = "referencePassword";
+        public static final String REFERENCE_SCHEMAS = "referenceSchemas";
+        public static final String REFERENCE_URL = "referenceUrl";
+        public static final String REFERENCE_USERNAME = "referenceUsername";
+        public static final String SCHEMAS = "schemas";
+        public static final String URL = "url";
+        public static final String HELP = "help";
+        public static final String VERSION = "version";
+        public static final String SNAPSHOT_FORMAT = "snapshotFormat";
+        public static final String LOG_FILE = "logFile";
+        public static final String LOG_LEVEL = "logLevel";
     }
 }
